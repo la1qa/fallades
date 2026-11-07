@@ -1,0 +1,96 @@
+{
+  "ticket_id": "TIC-20261005-000172",
+  "alert_ids": [
+    "ALR-20261005-000172"
+  ],
+  "title": "UC-WEB-001 – Inyección PHP contra www.tarvia.example (eval-stdin.php), bloqueada por WAF",
+  "verdict": "true_positive",
+  "confidence": 0.95,
+  "severity": "low",
+  "severity_rationale": "Regla UC-WEB-001 (low) × activo más crítico afectado WEB-ECOM01-04 (frontal web DMZ, criticidad Crítica) = medium en la matriz. Ajuste −1 aplicado: el control (WAF) bloqueó la solicitud (403) antes de producir efecto y no hay actividad posterior; no hay +1 aplicable (sin ejecución confirmada, identidad no VIP, sin datos personales/pagos). Resultado: medium − 1 = low.",
+  "affected": {
+    "users": [],
+    "hosts": [
+      "WEB-ECOM01 (10.50.1.11)",
+      "WEB-ECOM02 (10.50.1.12)",
+      "WEB-ECOM03 (10.50.1.13)",
+      "WEB-ECOM04 (10.50.1.14)"
+    ],
+    "business_services": [
+      "Tienda online y app (≈38% de la facturación)"
+    ],
+    "customers": []
+  },
+  "summary": "La regla UC-WEB-001 (firma de inyección PHP, rule_msg 'PHP Injection') disparó por un intento real de explotar la ruta conocida /vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php contra el WAF del público www.tarvia.example. El origen de la alerta, 198.18.11.49 (BR, AS64680, hosting/internet-scanner simulado), envió una sola solicitud GET que fue bloqueada (403). La misma ruta fue objetivo de una campaña de escaneo automático worldwide: 24 IPs del rango 198.18.x (Nuclei/zgrab/curl/python-requests desde BR, DE, US, RU, CN, VN, NL) hitting la misma URI, de las cuales 24/24 (=100%) fueron bloqueadas (403), sin ningún 2xx/200. No hay EDR_events en WEB-ECOM01, ni cambios aprobados/pentest autorizado. No hay evidencia de compromiso ni de acceso exitoso.",
+  "evidence": [
+    {
+      "source": "waf",
+      "event_id": "WAF-0001840",
+      "finding": "GET a /vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php desde 198.18.11.49 (BR), user_agent python-requests/2.28, status 403, action blocked, rule 933100. Es el evento relacionado con la alerta (creado 2026-10-04T22:12:00Z)."
+    },
+    {
+      "source": "waf",
+      "event_id": "WAF-0001825; WAF-0001861; WAF-0001834; WAF-0001821; WAF-0001915; WAF-0001806; WAF-0001905; WAF-0001910; WAF-0001881; WAF-0001807; WAF-0001900; WAF-0001908; WAF-0001860; WAF-0001852; WAF-0001818; WAF-0001816; WAF-0001838; WAF-0001913; WAF-0001829; WAF-0001855; WAF-0001843; WAF-0001858; WAF-0001893",
+      "finding": "Campaña de escaneo worldwide sobre la misma URI: 24 hits de 24 IPs distintas del rango 198.18.x, user_agents de herramientas públicas de scanning. Las 24 fueron status 403/blocked. No existe ningún 200/2xx en la ventana; el bloqueo del WAF fue total."
+    },
+    {
+      "source": "proxy",
+      "event_id": "(sin resultados)",
+      "finding": "0 coincidencias para 198.18.11.49 en proxy en la ventana. El tráfico no llegó más allá del WAF."
+    },
+    {
+      "source": "edr_events",
+      "event_id": "(sin resultados en WEB-ECOM01)",
+      "finding": "Sin eventos EDR en WEB-ECOM01 en la ventana. No hay ejecución de código ni web shell."
+    },
+    {
+      "source": "consultar_inteligencia (TIP/GeoIP)",
+      "event_id": "indicador 198.18.11.49",
+      "finding": "IP = hosting (AS64680, BR), clasificada como 'escáner de Internet (simulado)'. No es Tor/VPN. IOC alineado con escaneo automatizado."
+    },
+    {
+      "source": "consultar_inteligencia (TIP)",
+      "event_id": "indicador /vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php",
+      "finding": "no_found → IOC de ruta DESCONOCIDO en el TIP (no es 'limpio por defecto')."
+    },
+    {
+      "source": "consultar_activo (CMDB)",
+      "event_id": "WEB-ECOM01 A01167 / WEB-ECOM02 A01168 / WEB-ECOM03 A01169 / WEB-ECOM04 A01170",
+      "finding": "Todos frontales web DMZ, internet-facing, criticidad Crítica. WEB-ECOM01 y WEB-ECOM02/04 sin vulnerabilidades listadas. WEB-ECOM03 tiene una VLN-2026-0412 (pagebuilder-lite, subida de ficheros en /wp-content/plugins/pagebuilder-lite/ajax/upload.php) — NO es la ruta atacada (eval-stdin.php) ni es del servicio de e-commerce front. No hay relación con el ataque."
+    },
+    {
+      "source": "consultar_cambios",
+      "event_id": "(sin resultados)",
+      "finding": "Sin cambios aprobados, pentests o actividades autorizadas que justifiquen el tráfico. Origen no autorizado."
+    }
+  ],
+  "enrichment": [
+    {
+      "indicator": "198.18.11.49",
+      "type": "ip",
+      "source": "TIP/GeoIP",
+      "result": "AS64680 – Hosting (escáner de Internet, simulado) – BR"
+    },
+    {
+      "indicator": "/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php",
+      "type": "url",
+      "source": "TIP",
+      "result": "not_found (DESCONOCIDO)"
+    }
+  ],
+  "mitre": [
+    "T1190 (Exploit Public-Facing Application) – intento bloqueado"
+  ],
+  "recommended_actions": [],
+  "escalation": {
+    "escalate": false,
+    "to": "n/a",
+    "reason": "true_positive de severidad low; sin ejecución de código confirmada, sin robo de credenciales, sin persistencia, sin salida de datos personales ni fraude económico. No se cumple ningún criterio de escalado obligatorio a N2."
+  },
+  "open_questions": [
+    "No se pudo confirmar si la ruta eval-stdin.php existe realmente en alguno de los frontales (phpunit no está listado como vulnerable en WEB-ECOM01). En la práctica no importa para el veredicto porque 100% de los hits fueron bloqueados antes de tocar la app, pero conviene verificar en un lote que el path no esté desplegado en /vendor de los frontales para reducir el ruido futuro.",
+    "El IOC de ruta está como DESCONOCIDO en el TIP; se recomienda clasificarlo en el TIP/regex del WAF para mejorar la precisión de la firma."
+  ],
+  "executed_actions": [],
+  "triage_seconds": 114.44
+}

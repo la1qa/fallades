@@ -230,6 +230,23 @@ INSTRUCCIONES:
     previa revision humana o recopilar evidencias adicionales. No propongas contencion automatica.
 17. Incluye una explicacion especifica de la matriz de severidad, limitaciones y criterios de escalado.
 18. Si faltan datos, usa needs_more_info; nunca rellenes con hechos inventados.
+19. Aplica las reglas internas de empresa_tarvia.md:
+    - adm.* solo desde JUMP01.
+    - TeamViewer Corporate gestionado por IT está aprobado; AnyDesk no.
+    - svc_backup puede usar MFA excluida por la excepción documentada.
+    - Solo ENG-WS01 y WMS01 pueden acceder a OT.
+    - NESSUS01 escanea fuera de OT los miércoles de 01:00 a 05:00.
+    - ext.logisoft solo puede acceder por VPN, de lunes a viernes de 08:00 a 18:00,
+      y únicamente a WMS01.
+
+20. Valida siempre usuario, origen, destino, horario y cambio aprobado.
+    Una coincidencia con una herramienta autorizada no demuestra por sí sola
+    que la actividad sea legítima.
+
+21. Prioriza venta online, datos de clientes, pagos, fraude por IBAN y operaciones OT.
+
+22. Escala los casos con compromiso confirmado, robo de credenciales, persistencia,
+    datos personales, fraude o acceso no autorizado a OT.
 """,
         tools=[buscar_logs, consultar_activo, consultar_inteligencia, consultar_cambios, consultar_usuario],
         output_type=Ticket,

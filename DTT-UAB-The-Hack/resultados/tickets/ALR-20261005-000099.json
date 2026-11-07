@@ -1,0 +1,144 @@
+{
+  "ticket_id": "TIO-20261005-000099",
+  "alert_ids": [
+    "ALR-20261005-000099"
+  ],
+  "title": "Correo 'Novedades de la semana' de news.zalando.example reportado como phishing por usuario (UC-EML-001)",
+  "verdict": "benign_true_positive",
+  "confidence": 0.88,
+  "severity": "low",
+  "severity_rationale": "Regla UC-EML-001 con severidad 'low'. Entidad más crítica: puesto de trabajo WS-BCN-1842 (A00842), criticidad Media; usuario no privilegiado ni VIP. Matriz: low × Media = low. Sin ajustes aplicados: (1) no hay ejecución ni acceso confirmado al contenido (solo reporte de usuario, sin clic/descarga/ejecución), (2) la identidad no es VIP/privilegiada, (3) no hay datos personales o pagos implicados, y (4) no procede bajar un nivel porque ningún control bloqueó el mensaje (fue entregado), por lo que se mantiene en low. Se clasifica como benign_true_positive (flujo de newsletter de proveedor autorizado), severidad low según sección 3 de política.",
+  "affected": {
+    "users": [
+      "alejandro.ruiz@tarvia.example"
+    ],
+    "hosts": [
+      "WS-BCN-1842"
+    ],
+    "business_services": [
+      "Puesto de trabajo"
+    ],
+    "customers": [
+      "Zalando (proveedor denewsletter, dominio news.zalando.example)"
+    ]
+  },
+  "summary": "El usuario Alejandro Ruiz (Compras) marcó como phishing un correo entrante de boletín 'Novedades de la semana' procedente de newsletter@news.zalando.example (message_id <ee7ba405266e7cc3@news.zalando.example>, event EML-0002728, 2026-10-05T07:37:45Z). El mensaje es un boletín de distribución masiva, correctamente autenticado (SPF/DKIM/DMARC pass), sin adjuntos y con una sola URL de seguimiento. No se encontró interacción del usuario (sin clic, descarga ni ejecución), ni sesión anómala posterior. El dominio se usa de forma legítima y masiva dentro de Tarvia por múltiples empleados (categoría de proxy 'Negocios'). El veredicto es benign_true_positive: la detección se dispara correctamente por un reporte real de usuario, pero la actividad subyacente está autorizada/sin riesgo.",
+  "evidence": [
+    {
+      "source": "email",
+      "event_id": "EML-0002728",
+      "finding": "Correo reportado. Inbound, sender newsletter@news.zalando.example, subject 'Novedades de la semana', 1 único destinatario (alejandro.ruiz), sin adjuntos, url https://news.zalando.example/c/2fcc86, verdict 'bulk', action 'delivered', SPF/DKIM/DMARC pass, sender_ip 198.18.10.242."
+    },
+    {
+      "source": "email",
+      "event_id": "EML-0002542/EML-0002292/EML-0002420/... (misma campaña)",
+      "finding": "Mismo remitente y subject distribuido en masa a múltiples destinatarios de distintos departamentos (david.sanz, lucia.fernandez, anna.pena, ...). Indica programa de newsletter legítimo de proveedor."
+    },
+    {
+      "source": "email_clicks",
+      "event_id": "CLK-0000679",
+      "finding": "Único clic de correo del usuario hacia salesforce.com (otro mensaje). Búsqueda del URL/alerta (news.zalando.example/c/2fcc86): 0 resultados. -> Sin interacción del usuario con el contenido alertado."
+    },
+    {
+      "source": "proxy",
+      "event_id": "PRX-0001885/PRX-0003153/PRX-0006082/... (varios)",
+      "finding": "Múltiples empleados resolvieron/visitaron news.zalando.example (category 'Negocios', status 200). alejandro.ruiz no figura en el acceso al URL del caso. -> Uso empresarial legítimo del dominio."
+    },
+    {
+      "source": "idp_signins",
+      "event_id": "SIGN-0002753/SIGN-0002754/SIGN-0006445/SIGN-0006446/SIGN-0006447/SIGN-0006448",
+      "finding": "Sesiones de Alejandro normales (Office365, ERP Web, Teams, Portal Empleado), result success, risk_level 'none', MFA approved, device compliant. Sin inicio de sesión anómalo tras el reporte."
+    },
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0004167/EDR-0004164/EDR-0004166/EDR-0004165/EDR-0009607",
+      "finding": "Solo procesos legítimos firmados por Microsoft (MsMpEng.exe, EXCEL.EXE, WINWORD.EXE, OneDrive.exe) en WS-BCN-1842. Sin ejecución de código originado en el URL adjunto al correo."
+    },
+    {
+      "source": "inteligencia_TIP",
+      "event_id": "consultar_inteligencia",
+      "finding": "news.zalando.example -> TIP null; newsletter@news.zalando.example -> TIP null; 198.18.10.242 -> TIP null (geo: hosting, proveedor de correo simulado). Indicadores DESCONOCIDOS (no maliciosos conocidos, tampoco verificados como limpios por falta de OSINT/sandbox en el entorno)."
+    },
+    {
+      "source": "cmdb_activo",
+      "event_id": "A00842/WS-BCN-1842",
+      "finding": "Portátil Windows 11, criticidad Media, zone HQ-USERS, sin exposición a internet, sin vulnerabilidades."
+    },
+    {
+      "source": "directorio",
+      "event_id": "consultar_usuario",
+      "finding": "Alejandro Ruiz, Compras / Técnico de Aprovisionamiento, account_type user, privileged False, vip False, activo."
+    },
+    {
+      "source": "cambios",
+      "event_id": "consultar_cambios",
+      "finding": "Sin cambios/autorizaciones asociadas al dominio (newsletter recurrente, no es un cambio aprobado)."
+    }
+  ],
+  "enrichment": [
+    {
+      "indicator": "news.zalando.example",
+      "type": "domain",
+      "source": "TIP/GeoIP interno",
+      "result": "null (desconocido)"
+    },
+    {
+      "indicator": "newsletter@news.zalando.example",
+      "type": "email_sender",
+      "source": "TIP interno",
+      "result": "null (desconocido)"
+    },
+    {
+      "indicator": "198.18.10.242",
+      "type": "ip",
+      "source": "TIP/GeoIP interno",
+      "result": "null; hosting/proofreader de correo (AS64660); no TOR/VPN; hosting=True"
+    },
+    {
+      "indicator": "https://news.zalando.example/c/2fcc86",
+      "type": "url",
+      "source": "DNS/search",
+      "result": "0 resoluciones en ventana; sin sandbox disponible en el entorno para análisis adicional"
+    }
+  ],
+  "mitre": [
+    "T1566 Phishing"
+  ],
+  "recommended_actions": [
+    {
+      "action": "Purgar el mensaje EML-0002728 del buzón de alejandro.ruiz@tarvia.example (acción que el N1 puede ejecutar).",
+      "target": "Buzón del usuario",
+      "requires_approval": false,
+      "justification": "Mensaje benigno/no deseado; purgar correo es permitido para N1 sin aprobación."
+    },
+    {
+      "action": "NO bloquear el dominio news.zalando.example a nivel global: es un boletín de proveedor usado legítimamente por 60+ empleados (riesgo de afectar servicio legítimo). Si se requiere contención del URL concreto, bloquear solo https://news.zalando.example/c/2fcc86 y solo bajo criterio N2.",
+      "target": "Proxy/EmailGW/EDR",
+      "requires_approval": true,
+      "justification": "Servicio de uso dual legítimo; la política exige criterio N2 para bloqueos globales."
+    },
+    {
+      "action": "Sin cambios de cuenta/sesión: no hay evidencia de envío de credenciales ni sesión desde IP del atacante, no se proponen revocaciones.",
+      "target": "Cuenta alejandro.ruiz",
+      "requires_approval": false,
+      "justification": "Sin indicios de compromiso."
+    },
+    {
+      "action": "Cerrar el ticket en N1 como benign_true_positive (sin escalado obligatorio). Opcional: nota de concienciación al usuario si el reporte se repite; revisar por qué el usuario marcó un boletín como phishing.",
+      "target": "Usuario / lote",
+      "requires_approval": false,
+      "justification": "Actividad autorizada y sin riesgo; cierre según runbook RB-01."
+    }
+  ],
+  "escalation": {
+    "escalate": false,
+    "to": "N2",
+    "reason": "No se cumplen criterios de escalado obligatorio (sección 5): es benign_true_positive, sin ejecución confirmada de código malicioso, sin robo de credenciales/persistencia, sin salida de datos personales o pagos, y no hay cadena de alertas correlacionadas. Severidad final low por debajo del umbral de escalado."
+  },
+  "open_questions": [
+    "Confirmar con Tesanería/Negocio que news.zalando.example corresponde a un proveedor real de boines de Tarvia (legitimidad del remitente más allá del PASS de autenticación).",
+    "Sandbox/OSINT del URL https://news.zalando.example/c/2fcc86 no disponible en el entorno; si se requiere, escalar análisis a N2."
+  ],
+  "executed_actions": [],
+  "triage_seconds": 173.03
+}

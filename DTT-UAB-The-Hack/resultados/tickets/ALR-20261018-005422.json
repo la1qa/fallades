@@ -1,0 +1,133 @@
+{
+  "ticket_id": "TIC-20261018-005422-CRED",
+  "alert_ids": [
+    "ALR-20261018-005422"
+  ],
+  "title": "Credential stuffing contra login de clientes (UC-WEB-002) — contenido por rate limit",
+  "verdict": "true_positive",
+  "confidence": 0.92,
+  "severity": "high",
+  "severity_rationale": "Veredicto true_positive; severidad de la regla = high; activo/criticidad más crítica afectada = frontal web de tienda online (Crítica, A01167-A01170); cruce high x Crítica = critical; se aplica 1 ajuste -1 porque el control (rate limit + captcha) bloqueó toda la actividad antes de producir efecto y no hay actividad posterior (cero accesos correctos, cero cambios de cuenta). Máximo un ajuste: critical - 1 = high.",
+  "affected": {
+    "users": [],
+    "hosts": [
+      "WEB-ECOM01 (10.50.1.11)",
+      "WEB-ECOM02 (10.50.1.12)",
+      "WEB-ECOM03 (10.50.1.13)",
+      "WEB-ECOM04 (10.50.1.14)"
+    ],
+    "business_services": [
+      "Tienda online y app (≈38% de la facturación)"
+    ],
+    "customers": [
+      "user10219, user2680, user58480, user39335, user32143, user23940 (@correo-cliente.example) — sin acceso confirmado"
+    ]
+  },
+  "summary": "Alerta WAF UC-WEB-002 (credential stuffing contra login de clientes) detonada por un pico de 60 fallos de login en 15 min. Los 6 eventos relacionados (ECA-0020447 a ECA-0020452) en ecom_auth confirman patrón automatizado (user_agent python-requests/2.31, device_fp fp-bot, captcha challenge_failed), todos desde 198.18.164.76, todos con result=failure y failure_reason=rate_limited. No hay ningún acceso correcto desde la IP, ni cambios de email/dirección ni compra de tarjeta regalo en ecom_account. El control de rate limit + captcha bloqueó el ataque antes de producir efecto. No existe cambio autorizado que lo justifique.",
+  "evidence": [
+    {
+      "source": "ecom_auth",
+      "event_id": "ECA-0020447",
+      "finding": "resultado=fail, failure_reason=rate_limited, captcha=challenge_failed, user_agent=python-requests/2.31, device_fp=fp-bot, src_ip=198.18.164.76"
+    },
+    {
+      "source": "ecom_auth",
+      "event_id": "ECA-0020448",
+      "finding": "resultado=fail, failure_reason=rate_limited, captcha=challenge_failed, src_ip=198.18.164.76"
+    },
+    {
+      "source": "ecom_auth",
+      "event_id": "ECA-0020449",
+      "finding": "resultado=fail, failure_reason=rate_limited, captcha=challenge_failed, src_ip=198.18.164.76"
+    },
+    {
+      "source": "ecom_auth",
+      "event_id": "ECA-0020450",
+      "finding": "resultado=fail, failure_reason=rate_limited, captcha=challenge_failed, src_ip=198.18.164.76"
+    },
+    {
+      "source": "ecom_auth",
+      "event_id": "ECA-0020451",
+      "finding": "resultado=fail, failure_reason=rate_limited, captcha=challenge_failed, src_ip=198.18.164.76"
+    },
+    {
+      "source": "ecom_auth",
+      "event_id": "ECA-0020452",
+      "finding": "resultado=fail, failure_reason=rate_limited, captcha=challenge_failed, src_ip=198.18.164.76"
+    },
+    {
+      "source": "tip_geoip",
+      "event_id": "consulta 198.18.164.76",
+      "finding": "hosting (AS64690, is_hosting=True), US; TIP=null → indicador DESCONOCIDO, no limpio"
+    },
+    {
+      "source": "cmdb",
+      "event_id": "A01167-A01170",
+      "finding": "frontales web internet-facing en DMZ, criticidad Crítica; WEB-ECOM03 tiene VLN-2026-0412 (upload, CVSS 8.8) — no relacionada con este incidente"
+    },
+    {
+      "source": "ecom_account",
+      "event_id": "sin_coincidencias",
+      "finding": "0 eventos de cambio de email/dirección ni pago de tarjeta para los correos afectados; sin acceso correcto que lo motive"
+    },
+    {
+      "source": "cambios",
+      "event_id": "sin_coincidencias",
+      "finding": "0 cambios/pentests autorizados que justifiquen la actividad"
+    }
+  ],
+  "enrichment": [
+    {
+      "indicator": "198.18.164.76",
+      "type": "ip",
+      "source": "TIP/GeoIP interno",
+      "result": "hosting, AS64690; desconocido en TIP (no se marca limpio)"
+    },
+    {
+      "indicator": "python-requests/2.31 + fp-bot + captcha challenge_failed",
+      "type": "behavioral",
+      "source": "ecom_auth",
+      "result": "huella de ataque automatizado de credential stuffing"
+    }
+  ],
+  "mitre": [
+    "T1110.004 Credential Stuffing"
+  ],
+  "recommended_actions": [
+    {
+      "action": "Escalar a N2 en la misma jornada y notificar al Responsable SOC",
+      "target": "obligatorio",
+      "requires_approval": false,
+      "justification": "true_positive de severidad high exige escalado obligatorio (apartado 5 y SLA): 30 min hasta triaje."
+    },
+    {
+      "action": "Proponer bloqueo del IOC 198.18.164.76 en proxy/WAF (no ejecutado en esta sesión)",
+      "target": "contención propuesta",
+      "requires_approval": false,
+      "justification": "El N1 puede proponer/executar bloqueo de IP, pero se deja como propuesta para confirmar que no es servicio legítimo de uso dual (es IP de hosting en rango 198.18/15). No ejecutar sin verificar."
+    },
+    {
+      "action": "Confirmar y mantener rate limit + captcha activos en /login y monitoreo de ecom_auth por accesos correctos desde el rango 198.18.0.0/15",
+      "target": "refuerzo de control",
+      "requires_approval": false,
+      "justification": "El control ya bloqueó el intento; conviene vigilar reintentos y posibles intentos de evasión."
+    },
+    {
+      "action": "No resetear cuentas ahora: sin accesos correctos ni cambios en ecom_account. Revisar las 6 identidades si reaparece actividad.",
+      "target": "sin accion inmediata",
+      "requires_approval": false,
+      "justification": "No hay compromiso de cuenta confirmado."
+    }
+  ],
+  "escalation": {
+    "escalate": true,
+    "to": "N2 de guardia",
+    "reason": "true_positive high → escalado obligatorio a N2 en la misma jornada; notificar al Responsable SOC (SLA high = 30 min). No es fraude consumado ni exfiltración (sin accesos correctos), pero ataca un activo Crítico de e-commerce."
+  },
+  "open_questions": [
+    "Los 60 fallos reportados en 15 min solo tienen 6 eventos (ECA-0020447..052) recuperables; el resto puede estar fuera de la ventana o del alcance de búsqueda. Límite de búsqueda declarado.",
+    "El WAF no devuelve registros por la IP en formato raw; la confirmación del bloqueo se infiere de failure_reason=rate_limited y del campo rate_limit de la alerta."
+  ],
+  "executed_actions": [],
+  "triage_seconds": 110.44
+}

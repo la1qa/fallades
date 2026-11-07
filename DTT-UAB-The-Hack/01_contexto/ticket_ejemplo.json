@@ -1,0 +1,62 @@
+{
+  "ticket_id": "TKT-EJEMPLO-0001",
+  "alert_ids": [
+    "ALR-20261006-000000"
+  ],
+  "title": "Escaneo oportunista de Internet contra la tienda online, bloqueado por el WAF",
+  "verdict": "true_positive",
+  "confidence": 0.93,
+  "severity": "informational",
+  "severity_rationale": "Regla low sobre activo crítico = medium; −1 por bloqueo del WAF sin efecto; ruta inexistente: informational.",
+  "affected": {
+    "users": [],
+    "hosts": [
+      "WEB-ECOM01..04"
+    ],
+    "business_services": [
+      "Tienda online y app"
+    ],
+    "customers": []
+  },
+  "summary": "Una IP de hosting sin historial lanzó 12 peticiones a /.env y /wp-login.php. El WAF devolvió 403 en todas. La tienda no usa WordPress en ese dominio y /.env no existe. No hay más actividad de la IP.",
+  "evidence": [
+    {
+      "source": "waf",
+      "event_id": "WAF-0000000",
+      "finding": "403 en /.env, regla 930130"
+    }
+  ],
+  "enrichment": [
+    {
+      "indicator": "198.18.x.x",
+      "type": "ip",
+      "source": "ti_feed",
+      "result": "sin coincidencias"
+    },
+    {
+      "indicator": "198.18.x.x",
+      "type": "ip",
+      "source": "geoip_asn",
+      "result": "hosting, NL"
+    }
+  ],
+  "mitre": [
+    "T1190"
+  ],
+  "recommended_actions": [
+    {
+      "action": "close",
+      "target": "ticket",
+      "requires_approval": false,
+      "justification": "Bloqueado, sin impacto"
+    }
+  ],
+  "executed_actions": [],
+  "escalation": {
+    "escalate": false,
+    "to": "",
+    "reason": ""
+  },
+  "open_questions": [],
+  "triage_seconds": 41
+}

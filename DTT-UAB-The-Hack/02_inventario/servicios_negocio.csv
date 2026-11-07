@@ -1,0 +1,15 @@
+servicio,criticidad,impacto,activos,responsable
+Tienda online y app,Crítica,"38% de la facturación; 1,3 M clientes registrados","WEB-ECOM01..04, PAY-GW01, SQL-CRM01",Directora de E-commerce
+Cobros online (PCI DSS),Crítica,Toda la venta online,PAY-GW01,Director Financiero
+Cobro en tienda (PCI DSS),Alta,Venta física de 64 tiendas,POS-T*,Directora de Operaciones
+"CRM y datos de clientes (1,3 M registros, RGPD)",Crítica,Datos personales: brecha notificable a la AEPD en 72 h,"SQL-CRM01, CRM-APP01",DPO
+Identidad y directorio activo,Crítica,Acceso de todos los empleados,"DC01, DC02, IdP en la nube",Director de Tecnología
+"ERP: finanzas, compras, stock",Alta,"Pagos a proveedores, stock","ERP-APP01, ERP-DB01",Director Financiero
+Gestión de almacén (WMS),Alta,Salida de pedidos online desde Martorell,WMS01,Directora de Operaciones
+Clasificación automática de pedidos,Alta,Parada = retraso de todos los pedidos online,"PLC-SORT01..06, HMI-SORT01",Directora de Operaciones
+Asistente de compra con IA «Vela»,Alta,Atención 24/7; acceso a pedidos del cliente autenticado,AI-ASSIST01,Responsable de IA
+Copias de seguridad,Alta,Recuperación ante ransomware,"BACKUP01, s3://tarvia-backups-prod",Director de Tecnología
+Nóminas y portal del empleado,Alta,Datos personales de empleados,HR-APP01,Directora de Personas
+Correo y colaboración (SaaS),Alta,Comunicación interna y con proveedores,Correo en la nube,Director de Tecnología
+Integración continua,Media,Despliegues de e-commerce,"JENKINS-DEV01, GIT-DEV01",Director de Tecnología
+Puesto de trabajo,Media,Productividad,"WS-*, LT-*",Director de Tecnología

@@ -1,0 +1,132 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Informe de incidente (fase 2, N2)",
+  "type": "object",
+  "required": [
+    "incident_id",
+    "title",
+    "alert_ids",
+    "patient_zero",
+    "initial_access",
+    "timeline",
+    "scope",
+    "root_cause",
+    "containment_plan"
+  ],
+  "properties": {
+    "incident_id": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "alert_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "related_incidents": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Otros incidentes que forman parte de la misma historia"
+    },
+    "patient_zero": {
+      "type": "string"
+    },
+    "initial_access": {
+      "type": "string"
+    },
+    "timeline": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "string"
+          },
+          "event_id": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "mitre": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "scope": {
+      "type": "object",
+      "properties": {
+        "users": {
+          "type": "array"
+        },
+        "hosts": {
+          "type": "array"
+        },
+        "data": {
+          "type": "string"
+        },
+        "business_impact": {
+          "type": "string"
+        }
+      }
+    },
+    "root_cause": {
+      "type": "string"
+    },
+    "containment_plan": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string"
+          },
+          "approver": {
+            "type": "string"
+          },
+          "business_impact": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "eradication_and_recovery": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "notifications": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Quién debe enterarse (DPO, adquirente PCI, proveedor...) y con qué plazo"
+    },
+    "detection_gaps": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Qué no detectamos y qué regla habría que crear o afinar"
+    },
+    "confidence": {
+      "type": "number"
+    },
+    "open_questions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

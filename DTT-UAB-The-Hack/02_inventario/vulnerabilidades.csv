@@ -1,0 +1,47 @@
+hostname,id,producto,severidad_cvss,estado,detectada,notas
+JENKINS-DEV01,CVE-2024-23897,Jenkins 2.426.2,9.8,abierta,2026-02-14,Lectura arbitraria de ficheros vía CLI que permite RCE. Parche pospuesto por dependencia de plugins. Servidor expuesto a Internet por error.
+WEB-ECOM03,VLN-2026-0412,Plugin pagebuilder-lite 2.1 (blog corporativo),8.8 (estimada),abierta,2026-10-15,Subida de ficheros sin validar en /wp-content/plugins/pagebuilder-lite/ajax/upload.php. Sin CVE asignado aún; aviso del fabricante.
+VPN-GW01,CVE-2024-21762,Firmware del concentrador VPN,9.8,corregida,2024-02-09,Parcheado en 2024.
+PRINT01,CVE-2021-34527,Windows Print Spooler,8.8,corregida,2021-07-02,PrintNightmare: parcheado.
+FS01,CVE-2024-38063,Windows TCP/IP (IPv6),9.8,abierta,2026-08-20,Mitigado deshabilitando IPv6; parche en ventana de noviembre.
+HMI-SORT01,VLN-OT-0003,Windows 10 IoT sin soporte de parches del fabricante,n/a,aceptada,2025-11-01,Riesgo aceptado por Operaciones; compensado con segmentación.
+WS-MAD-1882,CVE-2025-49704,Google Chrome,8.1,abierta,2026-10-01,Pendiente del ciclo mensual de parches.
+WS-BCN-1041,CVE-2025-49704,Google Chrome,6.5,abierta,2026-10-01,Pendiente del ciclo mensual de parches.
+WS-MAD-1929,CVE-2026-20817,Google Chrome,7.8,abierta,2026-10-01,Pendiente del ciclo mensual de parches.
+WS-BCN-1428,CVE-2026-21311,Windows 11,6.5,abierta,2026-10-01,Pendiente del ciclo mensual de parches.
+WS-BCN-1826,CVE-2025-49704,Windows 11,6.5,abierta,2026-10-01,Pendiente del ciclo mensual de parches.
+WS-BCN-2003,CVE-2026-20817,Windows 11,7.8,abierta,2026-10-01,Pendiente del ciclo mensual de parches.
+WS-BCN-1832,CVE-2025-49704,Microsoft Office,6.5,abierta,2026-10-01,Pendiente del ciclo mensual de parches.
+WS-BCN-1336,CVE-2026-20817,Google Chrome,6.5,abierta,2026-10-01,Pendiente del ciclo mensual de parches.
+WS-BCN-1993,CVE-2025-49704,Google Chrome,7.8,abierta,2026-10-01,Pendiente del ciclo mensual de parches.
+WS-BCN-1835,CVE-2026-20817,Google Chrome,6.5,abierta,2026-10-01,Pendiente del ciclo mensual de parches.
+WS-BCN-1574,CVE-2025-49704,Microsoft Office,7.8,abierta,2026-10-01,Pendiente del ciclo mensual de parches.
+WS-BCN-1841,CVE-2025-49704,Microsoft Office,8.1,abierta,2026-10-01,Pendiente del ciclo mensual de parches.
+WS-BCN-1340,CVE-2026-21311,Windows 11,8.1,abierta,2026-10-01,Pendiente del ciclo mensual de parches.
+WS-LOG-1638,CVE-2026-20817,Windows 11,7.8,abierta,2026-10-01,Pendiente del ciclo mensual de parches.
+WS-BCN-1098,CVE-2026-21311,Windows 11,7.8,abierta,2026-10-01,Pendiente del ciclo mensual de parches.
+WS-BCN-2012,CVE-2026-20817,Google Chrome,7.8,abierta,2026-10-01,Pendiente del ciclo mensual de parches.
+WS-BCN-1790,CVE-2025-49704,Windows 11,8.1,abierta,2026-10-01,Pendiente del ciclo mensual de parches.
+WS-BCN-1101,CVE-2025-49704,Google Chrome,8.1,abierta,2026-10-01,Pendiente del ciclo mensual de parches.
+WS-BCN-1828,CVE-2026-21311,Microsoft Office,8.1,abierta,2026-10-01,Pendiente del ciclo mensual de parches.
+WS-BCN-1507,CVE-2026-20817,Microsoft Office,6.5,abierta,2026-10-01,Pendiente del ciclo mensual de parches.
+WS-LOG-1684,CVE-2025-49704,Google Chrome,6.5,abierta,2026-10-01,Pendiente del ciclo mensual de parches.
+WS-BCN-1538,CVE-2026-20817,Google Chrome,7.8,abierta,2026-10-01,Pendiente del ciclo mensual de parches.
+WS-BCN-2036,CVE-2026-21311,Google Chrome,6.5,abierta,2026-10-01,Pendiente del ciclo mensual de parches.
+WS-BCN-1410,CVE-2026-20817,Windows 11,7.8,abierta,2026-10-01,Pendiente del ciclo mensual de parches.
+WS-BCN-1374,CVE-2026-20817,Google Chrome,7.8,abierta,2026-10-01,Pendiente del ciclo mensual de parches.
+WS-BCN-1547,CVE-2025-49704,Windows 11,6.5,abierta,2026-10-01,Pendiente del ciclo mensual de parches.
+WS-BCN-1083,CVE-2026-20817,Microsoft Office,7.8,abierta,2026-10-01,Pendiente del ciclo mensual de parches.
+WS-BCN-1258,CVE-2026-21311,Microsoft Office,6.5,abierta,2026-10-01,Pendiente del ciclo mensual de parches.
+WS-BCN-1980,CVE-2025-49704,Microsoft Office,7.8,abierta,2026-10-01,Pendiente del ciclo mensual de parches.
+WS-BCN-1137,CVE-2026-21311,Windows 11,8.1,abierta,2026-10-01,Pendiente del ciclo mensual de parches.
+WS-LOG-1710,CVE-2026-20817,Google Chrome,7.8,abierta,2026-10-01,Pendiente del ciclo mensual de parches.
+WS-BCN-1460,CVE-2026-21311,Windows 11,8.1,abierta,2026-10-01,Pendiente del ciclo mensual de parches.
+WS-BCN-1580,CVE-2025-49704,Google Chrome,8.1,abierta,2026-10-01,Pendiente del ciclo mensual de parches.
+WS-BCN-1444,CVE-2026-20817,Microsoft Office,6.5,abierta,2026-10-01,Pendiente del ciclo mensual de parches.
+WS-BCN-1448,CVE-2026-21311,Windows 11,8.1,abierta,2026-10-01,Pendiente del ciclo mensual de parches.
+WS-BCN-1110,CVE-2026-20817,Microsoft Office,8.1,abierta,2026-10-01,Pendiente del ciclo mensual de parches.
+WS-LOG-1759,CVE-2025-49704,Microsoft Office,8.1,abierta,2026-10-01,Pendiente del ciclo mensual de parches.
+WS-BCN-1803,CVE-2025-49704,Microsoft Office,6.5,abierta,2026-10-01,Pendiente del ciclo mensual de parches.
+WS-LOG-1588,CVE-2025-49704,Microsoft Office,8.1,abierta,2026-10-01,Pendiente del ciclo mensual de parches.
+WS-LOG-1761,CVE-2026-20817,Microsoft Office,7.8,abierta,2026-10-01,Pendiente del ciclo mensual de parches.

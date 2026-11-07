@@ -1,0 +1,14 @@
+id,titulo,inicio,fin,solicitante,detalle,alcance
+CHG-2026-1042,Pentest externo de la tienda online,2026-10-08 08:00,2026-10-10 18:00,Auditora externa,IPs origen 192.0.2.10-12; alcance www.tarvia.example y api; sin DoS,WEB-ECOM01..04
+CHG-2026-1049,Escaneo semanal de vulnerabilidades,2026-10-07 01:00,2026-10-07 05:00,Ciberseguridad,Origen NESSUS01 (svc_scanner); se repite cada miércoles,Todas las redes salvo OT
+CHG-2026-1050,Escaneo semanal de vulnerabilidades,2026-10-14 01:00,2026-10-14 05:00,Ciberseguridad,Origen NESSUS01 (svc_scanner),Todas las redes salvo OT
+CHG-2026-1057,Despliegue agente de monitorización 3.4 en servidores,2026-10-13 10:00,2026-10-13 13:00,Tecnología,PsExec desde JUMP01 con cuenta adm,"ERP-APP01, HR-APP01, PRINT01, CRM-APP01"
+CHG-2026-1063,Mantenimiento remoto del fabricante del clasificador,2026-10-17 08:00,2026-10-17 14:00,Logística,Acceso vía JUMP01; regla temporal OT-MAINT-TEMP,PLC-SORT01..06
+CHG-2026-1031,Script de inventario de software vía SCCM (PowerShell codificado),2026-09-28 00:00,2026-12-31 23:59,Tecnología,svc_sccm ejecuta -EncodedCommand diariamente 08:00-10:00,Todos los puestos
+CHG-2026-1066,Rotación de certificados de la VPN,2026-10-20 22:00,2026-10-20 23:30,Tecnología,Posibles desconexiones masivas,VPN-GW01
+FLUJO-0007,Envío mensual de variables de nómina a gestoría,2026-01-01 00:00,2026-12-31 23:59,Personas,Destino asesoria@gestoria-pons.example; contrato de encargado de tratamiento vigente,Correo
+CHG-2026-1071,Actualización del WMS por el proveedor Logisoft,2026-10-16 21:00,2026-10-16 23:59,Logística,"Acceso VPN de ext.logisoft fuera de horario, desde su IP corporativa",WMS01
+CHG-2026-1078,Alta de operador de copias en Backup Operators,2026-10-23 10:00,2026-10-23 12:00,Tecnología,Nuevo miembro del equipo de sistemas,Directorio activo
+CHG-2026-1080,Actualización del agente EDR a 7.15 en servidores,2026-10-24 20:00,2026-10-24 22:00,Ciberseguridad,Paradas de 1-3 min del agente por servidor,Servidores Windows
+CHG-2026-1051,Escaneo semanal de vulnerabilidades,2026-10-21 01:00,2026-10-21 05:00,Ciberseguridad,Origen NESSUS01 (svc_scanner),Todas las redes salvo OT
+CHG-2026-1052,Escaneo semanal de vulnerabilidades,2026-10-28 01:00,2026-10-28 05:00,Ciberseguridad,Origen NESSUS01 (svc_scanner),Todas las redes salvo OT

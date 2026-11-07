@@ -1,0 +1,45 @@
+rule_id,nombre,fuente,severidad_base,tactica,tecnica_id,tecnica,runbook,logica
+UC-EML-001,Correo reportado como phishing por un usuario,EMAIL_GW,low,Initial Access,T1566,Phishing,RB-01,Un usuario ha pulsado «Reportar phishing» en su cliente de correo.
+UC-EML-002,Adjunto potencialmente malicioso entregado,EMAIL_GW,medium,Initial Access,T1566.001,Spearphishing Attachment,RB-01,La pasarela clasificó el adjunto como sospechoso pero lo entregó (no hay veredicto concluyente).
+UC-EML-003,Clic en URL de phishing,EMAIL_GW,high,Initial Access,T1566.002,Spearphishing Link,RB-01,Un usuario hizo clic en una URL que la reescritura de enlaces reclasificó como phishing tras la entrega.
+UC-EML-004,Petición de cambio de datos bancarios por correo,EMAIL_GW,medium,Impact,T1657,Financial Theft,RB-01,Correo interno o externo que solicita modificar un IBAN de proveedor o empleado.
+UC-IDP-001,Viaje imposible,IDP,medium,Initial Access,T1078,Valid Accounts,RB-03,Dos inicios de sesión exitosos desde ubicaciones incompatibles en el tiempo transcurrido.
+UC-IDP-002,Password spraying,IDP,high,Credential Access,T1110.003,Password Spraying,RB-03,Muchos fallos de autenticación desde un origen contra muchas cuentas distintas.
+UC-IDP-003,Fatiga MFA (bombardeo de notificaciones push),IDP,high,Credential Access,T1621,Multi-Factor Authentication Request Generation,RB-03,Más de 10 notificaciones MFA push en menos de 15 minutos.
+UC-IDP-004,Inicio de sesión exitoso desde infraestructura anónima o de hosting,IDP,high,Initial Access,T1078,Valid Accounts,RB-03,"Login correcto desde Tor, VPN comercial o proveedor de hosting."
+UC-IDP-005,Regla de buzón sospechosa,IDP,high,Collection,T1114.003,Email Forwarding Rule,RB-03,"Regla que reenvía, borra o mueve correos con palabras clave financieras."
+UC-IDP-006,Reutilización de token de sesión desde otro origen (posible AiTM),IDP,high,Credential Access,T1539,Steal Web Session Cookie,RB-03,La misma sesión aparece desde una IP y dispositivo distintos al de la autenticación original.
+UC-IDP-007,Consentimiento OAuth a aplicación no verificada,IDP,high,Persistence,T1550.001,Application Access Token,RB-03,Un usuario concedió permisos de lectura de correo a una aplicación de terceros no verificada.
+UC-EDR-001,Proceso hijo sospechoso de Office o intérprete de scripts,EDR,high,Execution,T1204.002,Malicious File,RB-02,"Word, Excel, wscript o mshta lanzan un proceso inusual."
+UC-EDR-002,PowerShell con comando codificado,EDR,medium,Execution,T1059.001,PowerShell,RB-02,Ejecución de PowerShell con -EncodedCommand.
+UC-EDR-003,Malware detectado por el antivirus,EDR,medium,Execution,T1204,User Execution,RB-02,Firma o comportamiento malicioso detectado; ver campo action (bloqueado/en cuarentena/solo detectado).
+UC-EDR-004,Acceso a la memoria de LSASS,EDR,critical,Credential Access,T1003.001,LSASS Memory,RB-02,Un proceso no habitual lee la memoria de lsass.exe.
+UC-EDR-005,Herramienta de acceso remoto no autorizada,EDR,medium,Command and Control,T1219,Remote Access Software,RB-02,"Ejecución de AnyDesk, TeamViewer personal u otras RMM no aprobadas."
+UC-EDR-006,Comportamiento de minería de criptomonedas,EDR,high,Impact,T1496,Resource Hijacking,RB-02,Proceso con alto consumo de CPU y conexión a pool de minería.
+UC-EDR-007,Borrado de instantáneas de volumen,EDR,critical,Impact,T1490,Inhibit System Recovery,RB-02,"vssadmin, wmic o PowerShell eliminando shadow copies."
+UC-EDR-008,Comandos de reconocimiento de dominio,EDR,medium,Discovery,T1087.002,Domain Account,RB-02,"Ráfaga de comandos net, nltest, whoami, AdFind desde un puesto de usuario."
+UC-EDR-009,Proceso sospechoso lanzado por servidor web,EDR,critical,Persistence,T1505.003,Web Shell,RB-05,nginx/php-fpm/java lanzan una shell o herramienta del sistema.
+UC-EDR-010,Robo de credenciales de navegador,EDR,high,Credential Access,T1555.003,Credentials from Web Browsers,RB-02,Un proceso no navegador accede a las bases de datos de credenciales de Chrome/Edge.
+UC-NET-001,Beaconing a dominio poco frecuente,PROXY,medium,Command and Control,T1071.001,Web Protocols,RB-09,Conexiones periódicas con baja varianza a un dominio visto por menos de 3 equipos.
+UC-NET-002,Conexión a IP en lista de bloqueo de TI,NGFW,high,Command and Control,T1071,Application Layer Protocol,RB-09,Tráfico saliente hacia un indicador presente en la inteligencia de amenazas.
+UC-NET-003,Escaneo de puertos interno,NGFW,medium,Discovery,T1046,Network Service Discovery,RB-09,Un origen interno contacta más de 50 puertos/hosts en 5 minutos.
+UC-NET-004,Movimiento lateral SMB/RDP/PsExec,NGFW,high,Lateral Movement,T1021.002,SMB/Windows Admin Shares,RB-09,Conexión administrativa entre equipos que no suelen comunicarse.
+UC-NET-005,Consulta DNS a dominio con aspecto DGA,DNS,low,Command and Control,T1568.002,Domain Generation Algorithms,RB-09,Dominio con alta entropía y sin historial.
+UC-WEB-001,Ataque de inyección contra aplicación web,WAF,low,Initial Access,T1190,Exploit Public-Facing Application,RB-05,Firma SQLi/XSS/LFI en el WAF.
+UC-WEB-002,Credential stuffing contra login de clientes,WAF,high,Credential Access,T1110.004,Credential Stuffing,RB-05,Pico de fallos de login de clientes desde muchas IPs con patrón automatizado.
+UC-WEB-003,Actividad de cuenta de cliente compatible con toma de control (ATO),ECOM,high,Impact,T1657,Financial Theft,RB-05,Cambio de email/dirección seguido de compra de tarjeta regalo en menos de 30 min.
+UC-CLD-001,Uso de credenciales cloud desde ASN inusual,CLOUD,high,Initial Access,T1078.004,Cloud Accounts,RB-06,Access key usada desde un origen nunca visto para esa identidad.
+UC-CLD-002,Creación de identidad privilegiada en la nube,CLOUD,critical,Persistence,T1098.001,Additional Cloud Credentials,RB-06,Nuevo usuario IAM o claves con política de administrador.
+UC-CLD-003,Bucket de almacenamiento con acceso público,CLOUD,medium,Exfiltration,T1537,Transfer Data to Cloud Account,RB-06,Cambio de ACL o política que expone un bucket.
+UC-CLD-004,Descarga masiva desde bucket crítico,CLOUD,high,Exfiltration,T1530,Data from Cloud Storage,RB-06,Más de 500 GetObject en 10 minutos sobre un bucket clasificado como crítico.
+UC-DLP-001,Subida masiva a almacenamiento personal,DLP,high,Exfiltration,T1567.002,Exfiltration to Cloud Storage,RB-04,Subida de más de 100 MB o de datos personales a un servicio de almacenamiento no corporativo.
+UC-DLP-002,Envío de datos personales a correo externo,DLP,medium,Exfiltration,T1048,Exfiltration Over Alternative Protocol,RB-04,"Correo saliente con DNI, IBAN o listados de clientes."
+UC-AI-001,Posible prompt injection en el asistente de compra,AI_GATEWAY,medium,Initial Access,AML.T0051,LLM Prompt Injection (MITRE ATLAS),RB-07,El guardarraíl detectó instrucciones para ignorar el prompt de sistema.
+UC-AI-002,Intento de acceso a datos de otro cliente vía asistente,AI_GATEWAY,high,Collection,AML.T0057,LLM Data Leakage (MITRE ATLAS),RB-07,El asistente intentó invocar una herramienta con un identificador que no pertenece al cliente autenticado.
+UC-OT-001,Conexión a red OT desde origen no autorizado,NGFW,high,Lateral Movement,T0886,Remote Services (ICS),RB-08,Tráfico hacia la zona LOGISTICS-OT desde un origen distinto de ENG-WS01 o WMS01.
+UC-NET-006,Posible túnel DNS,DNS,medium,Exfiltration,T1048.003,Exfiltration Over Unencrypted Non-C2 Protocol (DNS),RB-09,Más de 200 consultas en 1 h a subdominios largos (>40 caracteres) de un mismo dominio.
+UC-IDP-008,Alta en grupo privilegiado del directorio activo,AD,high,Persistence,T1098,Account Manipulation,RB-03,"Una cuenta se añade a Domain Admins, Enterprise Admins o Backup Operators."
+UC-EDR-011,Manipulación o detención del agente EDR,EDR,critical,Defense Evasion,T1562.001,Disable or Modify Tools,RB-02,"El agente EDR se detiene, se desinstala o pierde la telemetría de forma inesperada."
+UC-EDR-012,Lectura de memoria de la aplicación de cobro (TPV),EDR,critical,Collection,T1005,Data from Local System (RAM scraping),RB-02,Un proceso no firmado lee la memoria del proceso de cobro de un TPV.
+UC-DEV-001,Dependencia con script de instalación que accede a secretos o a red,CICD,medium,Initial Access,T1195.002,Compromise Software Supply Chain,RB-10,"Durante un build, un script postinstall lee variables de entorno sensibles o conecta a un dominio nuevo."
+UC-VPN-001,Acceso VPN de proveedor fuera de horario o desde origen nuevo,VPN,low,Initial Access,T1133,External Remote Services,RB-03,Cuenta de tercero conectada fuera de su ventana contractual o desde un ASN no visto.

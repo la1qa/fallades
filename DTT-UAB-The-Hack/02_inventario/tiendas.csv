@@ -1,0 +1,29 @@
+tienda,nombre,ciudad,red
+T01,Barcelona Passeig de Gràcia,Barcelona,10.30.1.0/24
+T02,Barcelona Diagonal,Barcelona,10.30.2.0/24
+T03,Badalona Màgic,Badalona,10.30.3.0/24
+T04,Sabadell Centre,Sabadell,10.30.4.0/24
+T05,Girona Espai Gironès,Girona,10.30.5.0/24
+T06,Tarragona Parc Central,Tarragona,10.30.6.0/24
+T07,Lleida Rambla Ferran,Lleida,10.30.7.0/24
+T08,Madrid Gran Vía,Madrid,10.30.8.0/24
+T09,Madrid Serrano,Madrid,10.30.9.0/24
+T10,Madrid Xanadú,Arroyomolinos,10.30.10.0/24
+T11,Valencia Colón,Valencia,10.30.11.0/24
+T12,Valencia Aqua,Valencia,10.30.12.0/24
+T13,Sevilla Nervión,Sevilla,10.30.13.0/24
+T14,Málaga Larios,Málaga,10.30.14.0/24
+T15,Bilbao Ercilla,Bilbao,10.30.15.0/24
+T16,San Sebastián Centro,Donostia,10.30.16.0/24
+T17,Palma Jaume III,Palma,10.30.17.0/24
+T18,Murcia Thader,Murcia,10.30.18.0/24
+T19,Alicante Puerta del Mar,Alicante,10.30.19.0/24
+T20,Valladolid Santiago,Valladolid,10.30.20.0/24
+T21,A Coruña Marineda,A Coruña,10.30.21.0/24
+T22,Oviedo Uría,Oviedo,10.30.22.0/24
+T23,Zaragoza Puerto Venecia,Zaragoza,10.30.23.0/24
+T24,Granada Nevada,Granada,10.30.24.0/24
+T25,Lisboa Chiado,Lisboa,10.30.25.0/24
+T26,Lisboa Colombo,Lisboa,10.30.26.0/24
+T27,Porto Santa Catarina,Porto,10.30.27.0/24
+T28,Porto NorteShopping,Matosinhos,10.30.28.0/24

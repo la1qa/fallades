@@ -1,0 +1,18 @@
+fecha,tipo,usuario,detalle,fecha_efectiva
+2026-09-30,baja_voluntaria_comunicada,nuria.vidal@tarvia.example,Baja voluntaria; último día 16/10/2026. Se incorpora a un competidor del sector.,2026-10-16
+2026-10-02,viaje,ricard.castells@tarvia.example,Nueva York (reuniones con inversores) del 11/10 al 14/10. Lleva móvil corporativo.,2026-10-11
+2026-10-01,vacaciones,jordi.serra2@tarvia.example,Vacaciones 26/10 a 30/10 (sustituye Tesorería: responsable de Finanzas).,2026-10-26
+2026-10-06,viaje,marc.esteve@tarvia.example,Milán (feria textil),2026-10-27
+2026-10-01,alta,neus.riera@tarvia.example,Nueva incorporación,2026-10-25
+2026-10-04,cambio_puesto,gerard.prats@tarvia.example,Cambio de equipo dentro del departamento,2026-10-13
+2026-10-05,baja_voluntaria_comunicada,mireia.molina@tarvia.example,Último día a final de mes,2026-10-24
+2026-10-03,vacaciones,andrea.font@tarvia.example,Una semana,2026-10-10
+2026-10-07,teletrabajo_temporal,marina.mas@tarvia.example,Teletrabajo desde Valencia dos semanas,2026-10-11
+2026-10-08,viaje,oscar.navarro@tarvia.example,París (proveedor),2026-10-25
+2026-10-05,alta,marina.munoz@tarvia.example,Nueva incorporación,2026-10-07
+2026-10-05,cambio_puesto,toni.caballero2@tarvia.example,Cambio de equipo dentro del departamento,2026-10-07
+2026-10-07,baja_voluntaria_comunicada,albert.prats@tarvia.example,Último día a final de mes,2026-10-16
+2026-10-08,vacaciones,cristina.soler@tarvia.example,Una semana,2026-10-19
+2026-10-02,teletrabajo_temporal,nuria.bosch@tarvia.example,Teletrabajo desde Valencia dos semanas,2026-10-25
+2026-10-04,viaje,rocio.torres@tarvia.example,París (proveedor),2026-10-07
+2026-10-07,alta,pol.costa@tarvia.example,Nueva incorporación,2026-10-13

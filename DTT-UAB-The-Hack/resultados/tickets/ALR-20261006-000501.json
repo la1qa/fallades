@@ -1,0 +1,141 @@
+{
+  "ticket_id": "TKT-20261006-000501",
+  "alert_ids": [
+    "ALR-20261006-000501"
+  ],
+  "title": "Beaconing a teams.microsoft.com desde WS-BCN-1796 → heartbeat legítimo de Microsoft Teams (benign_true_positive)",
+  "verdict": "benign_true_positive",
+  "confidence": 0.95,
+  "severity": "low",
+  "severity_rationale": "Matriz: regla UC-NET-001 severidad `medium` × criticidad del activo WS-BCN-1796 `Media` = `medium`. Se aplica un único ajuste a la baja (−1) por ser flujo autorizado/legítimo: el dominio es known-good y el proceso origen es software conocido (ms-teams.exe de Microsoft). La política §2 establece que una alerta asociada a un flujo autorizado se clasifica como `benign_true_positive` con severidad `informational` o `low`. No procede ningún +1 (usuario no es VIP/privilegiado, no hay ejecución de código malicioso ni salida de datos/pagos). Resultado: `low`.",
+  "affected": {
+    "users": [
+      "laia.gutierrez (U1796, no privileged, no VIP, Compras, MFA)"
+    ],
+    "hosts": [
+      "WS-BCN-1796 (10.10.3.121, portátil, criticidad Media, HQ-US Barcelona)"
+    ],
+    "business_services": [
+      "Puesto de trabajo"
+    ],
+    "customers": []
+  },
+  "summary": "La alerta UC-NET-001 denuncia beaconing (conexiones periódicas de baja varianza) al dominio teams.microsoft.com desde WS-BCN-1796. La evidencia confirma que se trata del latido (heartbeat) legítimo del cliente de Microsoft Teams: el dominio está en el TIP como `known-good` (reputación benign, confianza 90), el proceso detrás es ms-teams.exe firmado por Microsoft Corporation, y el patrón exacto `GET /v1/ping` con user_agent `agent` y cadencia de 30 s se repite en otros usuarios de la empresa (p. ej. judith.lozano, WS-BCN-1209, PRX-0009279–0009282). La regla dispara por el umbral de `distinct_hosts_seen` del contexto, no por maliciousidad. Actividad autorizada/legítima → cerrar.",
+  "evidence": [
+    {
+      "source": "proxy",
+      "event_id": "PRX-0018480",
+      "finding": "2026-10-06T14:51:26Z GET https://teams.microsoft.com/v1/ping status 200 action allowed bytes 200/150 user_agent agent; src_ip 10.10.3.121 / WS-BCN-1796 / laia.gutierrez / dst_ip 198.18.0.4"
+    },
+    {
+      "source": "proxy",
+      "event_id": "PRX-0018481",
+      "finding": "2026-10-06T14:51:56Z idem (intervalo 30 s)"
+    },
+    {
+      "source": "proxy",
+      "event_id": "PRX-0018482",
+      "finding": "2026-10-06T14:52:26Z idem (intervalo 30 s)"
+    },
+    {
+      "source": "proxy",
+      "event_id": "PRX-0018483",
+      "finding": "2026-10-06T14:52:56Z idem (intervalo 30 s) → varianza nula, mean_interval_s=30"
+    },
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0009371",
+      "finding": "2026-10-06T07:14:13Z process_start ms-teams.exe path C:\\Program Files\\WindowsApps\\MSTeams\\ms-teams.exe signer Microsoft Corporation parent explorer.exe (presente en el activo antes de los pings)"
+    },
+    {
+      "source": "proxy (broad)",
+      "event_id": "PRX-0009279",
+      "finding": "Correlación: mismo latido `/v1/ping` user_agent `agent` en judith.lozano (WS-BCN-1209) 2026-10-05T16:04:05Z; PRX-0009280/281/282 idem → heartbeat Teams compartido a nivel empresa"
+    },
+    {
+      "source": "proxy (broad)",
+      "event_id": "PRX-0005400",
+      "finding": "Correlación: acceso real de colaboración MS Teams (inbox) de otros usuarios → traffic normal del servicio"
+    },
+    {
+      "source": "TIP_intelligence",
+      "event_id": "N/A",
+      "finding": "teams.microsoft.com: reputation benign, confidence 90, tags known-good, first_seen 2026-09-20"
+    },
+    {
+      "source": "CMDB",
+      "event_id": "A00796",
+      "finding": "WS-BCN-1796: portátil Win11 23H2, criticidad Media, EDR instalado, owner laia.gutierrez@tarvia.example"
+    },
+    {
+      "source": "intelligence_ip",
+      "event_id": "N/A",
+      "finding": "dst_ip 198.18.0.4: TIP null (sin reputación); belongs to TEST-NET-2 (RFC 5933) documentation range, usado aquí como placeholder de resolución del proxy hacia teams.microsoft.com"
+    },
+    {
+      "source": "dir",
+      "event_id": "U1796",
+      "finding": "laia.gutierrez: no privileged, no VIP, cuenta activa, MFA push, sin viajes/hr_events"
+    }
+  ],
+  "enrichment": [
+    {
+      "indicator": "teams.microsoft.com",
+      "type": "domain",
+      "source": "TIP interno",
+      "result": "benign / known-good, confianza 90"
+    },
+    {
+      "indicator": "198.18.0.4",
+      "type": "ip",
+      "source": "TIP/GeoIP",
+      "result": "TIP null → DESCONOCIDO en reputación; rango de documentación TEST-NET-2; el proxy lo mapea a teams.microsoft.com en toda la base de usuarios"
+    },
+    {
+      "indicator": "ms-teams.exe",
+      "type": "process",
+      "source": "EDR-0009371",
+      "result": "firmado por Microsoft Corporation, ruta oficial WindowsApps"
+    },
+    {
+      "indicator": "10.10.3.121 (WS-BCN-1796)",
+      "type": "asset",
+      "source": "CMDB A00796",
+      "result": "criticidad Media, portátil, EDR"
+    }
+  ],
+  "mitre": [
+    "T1071.001 (Web Protocols) / Command and Control — atribuido por la regla; actividad real = heartbeat de Teams, no C2"
+  ],
+  "recommended_actions": [
+    {
+      "action": "Cerrar la alerta ALR-20261006-000501 como benign_true_positive, severidad low, sin contención",
+      "target": "ticket",
+      "requires_approval": false,
+      "justification": "Dominio known-good, proceso legítimo ms-teams.exe, latido repetido en otros usuarios de la empresa"
+    },
+    {
+      "action": "Proponer tuning de la regla UC-NET-001: excluir del criterio de beaconing el latido legítimo de MS Teams (equador https://teams.microsoft.com/v1/ping, user_agent `agent`, cadencia ~30 s, bytes 200/150) y/o dar prioridad a la reputación known-good del TIP para no disparar contra dominios legítimos",
+      "target": "regla",
+      "requires_approval": false,
+      "justification": "Elimina recurrencia de falsos positivos sin afectar la cobertura"
+    },
+    {
+      "action": "Revisión humana en lote diaria (SLA informational/low) para confirmar que la regla no genera nuevas alertas tras el tuning",
+      "target": "regla",
+      "requires_approval": false,
+      "justification": "Validación de la contención propuesta"
+    }
+  ],
+  "escalation": {
+    "escalate": false,
+    "to": "N/A",
+    "reason": "Veredicto benign_true_positive de severidad low. No se cumple ningún criterio de escalado obligatorio del §5 (no hay true_positive high/critical, ejecución de código malicioso, robo de credenciales, salida de datos personales o pagos, ni cadena de ataque agrupada). Escalaría si apareciera C2 con proceso sospechoso detrás o movimiento lateral no autorizado (runbook RB-09)."
+  },
+  "open_questions": [
+    "El broad search del proxy se recortó (60 resultados, '[BUSQUEDA NO EXHAUSTIVA]'); no se enumeró de forma exhaustiva toda la base de usuarios del latido /v1/ping. La evidencia recabada (judith.lozano con el mismo patrón + decenas de accesos legítimos a teams.microsoft.com) es suficiente para concluir que es un heartbeat a nivel empresa, no una rama de compromiso.",
+    "dst_ip 198.18.0.4: sin reputación en el TIP (TIP null) y corresponde al rango de documentación TEST-NET-2; se trata de un placeholder del entorno, no de un C2 externo real. No se puede extraer geo/geolocalización significativa."
+  ],
+  "executed_actions": [],
+  "triage_seconds": 100.71
+}

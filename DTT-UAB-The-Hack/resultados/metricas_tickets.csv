@@ -1,0 +1,16 @@
+alert_id,producto,runbook,estado,verdict,severity,confidence,triage_seconds,archivo,detalle
+ALR-20261007-011785,EMAIL_GW,RB-01,reutilizado_completo,true_positive,critical,0.98,141.61,resultados/tickets/ALR-20261007-011785.json,
+ALR-20261009-011791,EDR,RB-02,reutilizado_completo,true_positive,critical,0.98,227.12,resultados/tickets/ALR-20261009-011791.json,
+ALR-20261010-011827,IDP,RB-03,completo_pendiente_revision_humana,true_positive,critical,0.97,136.28,resultados/tickets/ALR-20261010-011827.json,Estructura y campos presentes
+ALR-20261007-001237,DLP,RB-04,completo_pendiente_revision_humana,benign_true_positive,low,0.85,226.89,resultados/tickets/ALR-20261007-001237.json,Estructura y campos presentes
+ALR-20261011-011807,ECOM,RB-05,completo_pendiente_revision_humana,true_positive,high,0.85,16.64,resultados/tickets/ALR-20261011-011807.json,Estructura y campos presentes
+ALR-20261016-011821,CLOUD,RB-06,completo_pendiente_revision_humana,true_positive,critical,0.95,218.59,resultados/tickets/ALR-20261016-011821.json,Estructura y campos presentes
+ALR-20261010-002437,AI_GATEWAY,RB-07,incompleto,,,,15.97,resultados/incompletos/ALR-20261010-002437.json,Resumen vacío o demasiado breve
+ALR-20261006-011826,NGFW,RB-09,completo_pendiente_revision_humana,true_positive,critical,0.95,150.58,resultados/tickets/ALR-20261006-011826.json,Estructura y campos presentes
+ALR-20261005-000301,EDR,RB-02,completo_pendiente_revision_humana,benign_true_positive,low,0.95,134.83,resultados/tickets/ALR-20261005-000301.json,Estructura y campos presentes
+ALR-20261023-011915,AD,RB-03,completo_pendiente_revision_humana,benign_true_positive,low,0.85,106.48,resultados/tickets/ALR-20261023-011915.json,Estructura y campos presentes
+ALR-20261011-011877,VPN,RB-03,error_ejecucion,,,,237.1,resultados/tickets/ALR-20261011-011877.json,Codigo 1; revisar ALR-20261011-011877.log
+ALR-20261006-000501,PROXY,RB-09,completo_pendiente_revision_humana,benign_true_positive,low,0.95,100.71,resultados/tickets/ALR-20261006-000501.json,Estructura y campos presentes
+ALR-20261014-004078,DNS,RB-09,completo_pendiente_revision_humana,true_positive,medium,0.72,25.09,resultados/tickets/ALR-20261014-004078.json,Estructura y campos presentes
+ALR-20261018-005422,WAF,RB-05,error_ejecucion,,,,45.77,resultados/tickets/ALR-20261018-005422.json,Codigo 1; revisar ALR-20261018-005422.log
+ALR-20261005-000099,EMAIL_GW,RB-01,error_ejecucion,,,,12.56,resultados/tickets/ALR-20261005-000099.json,Codigo 1; revisar ALR-20261005-000099.log

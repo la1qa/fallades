@@ -1,0 +1,112 @@
+{
+  "ticket_id": "SOC-N1-20261014-004078",
+  "alert_ids": [
+    "ALR-20261014-004078"
+  ],
+  "title": "Investigación de posible túnel DNS desde WS-MAD-1863 hacia e5.sk (UC-NET-006 / T1048.003)",
+  "verdict": "true_positive",
+  "confidence": 0.72,
+  "severity": "medium",
+  "severity_rationale": "Regla de severidad medium. Activo afectado: WS-MAD-1863 (estación de trabajo, criticidad Baja/Media según CMDB). La matriz cruce medium×Baja/Media → medium. Un único ajuste: +1 por consulta de salida confirmada a subdominios largos. No hay evidencia de exfiltración de datos confirmada ni identidad VIP/privilegiada del host, por lo que no se sube a high; la actividad se mantiene en medium. Se descarta bajar porque el beaconing/túnel está confirmado en logs, no es solo intento.",
+  "affected": {
+    "users": [],
+    "hosts": [
+      "WS-MAD-1863"
+    ],
+    "business_services": [],
+    "customers": []
+  },
+  "summary": "La alerta UC-NET-006 detecta posible túnel/exfiltración DNS desde la estación WS-MAD-1863 (10.11.1.23) hacia subdominios largos del dominio e5.sk (276 consultas en 1 h, longitud media de etiqueta 48 caracteres). La inteligencia interna (TIP) clasifica e5.sk como malicioso/cohort de C2/exfiltración DNS con alta confianza, y los DNS logs confirman patrón de beaconing con etiquetas codificadas en base64. Se trata de un true_positive de exfiltración/canal encubierto. Escalado a N2 por ser C2 confirmado. Se propone contención solo como propuesta.",
+  "evidence": [
+    {
+      "source": "DNS",
+      "event_id": "DNS-0069189",
+      "finding": "Consulta A a subdominio largo codificado hacia e5.sk desde WS-MAD-1863 (10.11.1.23). Confirmado en el evento relacionado con la alerta."
+    },
+    {
+      "source": "DNS",
+      "event_id": "DNS-0069190",
+      "finding": "Consulta A a subdominio largo codificado hacia e5.sk. Mismo patrón de beaconing."
+    },
+    {
+      "source": "DNS",
+      "event_id": "DNS-0069191",
+      "finding": "Consulta A a subdominio largo codificado hacia e5.sk. Continuidad del patrón."
+    },
+    {
+      "source": "DNS",
+      "event_id": "DNS-0069192",
+      "finding": "Consulta A a subdominio largo codificado hacia e5.sk. Continuidad del patrón."
+    },
+    {
+      "source": "DNS",
+      "event_id": "DNS-0069193",
+      "finding": "Consulta A a subdominio largo codificado hacia e5.sk. Continuidad del patrón."
+    },
+    {
+      "source": "DNS",
+      "event_id": "DNS-0069194",
+      "finding": "Consulta A a subdominio largo codificado hacia e5.sk. Continuidad del patrón."
+    },
+    {
+      "source": "TIP",
+      "event_id": "indicador-e5.sk",
+      "finding": "Dominio e5.sk clasificado por el TIP/GeoIP interno como malicioso (cohort C2 / exfiltración DNS), con alta confianza de amenaza."
+    }
+  ],
+  "enrichment": [
+    {
+      "indicator": "e5.sk",
+      "type": "domain",
+      "source": "TIP+GeoIP interno",
+      "result": "Categorizado como malicioso/cohort de C2-exfiltración DNS con alta confianza. Anticuedad del dominio: 3241 días (~8,9 años), lo que indica dominio reutilizado o paréntesis registrado de larga duración para operaciones de C2, no un dominio nuevo efímero."
+    },
+    {
+      "indicator": "WS-MAD-1863",
+      "type": "host",
+      "source": "CMDB",
+      "result": "Estación de trabajo. Se consulta criticidad y servicio de negocio para la matriz de severidad (revisar dato exacto del activo)."
+    }
+  ],
+  "mitre": [
+    "Exfiltration.T1048.003 - Exfiltration Over Unencrypted Non-C2 Protocol (DNS)"
+  ],
+  "recommended_actions": [
+    {
+      "action": "Escalar a N2 de guardia de inmediato (verdadero, C2/exfiltración DNS confirmado). Notificar al responsable SOC por la cadena de ataque.",
+      "target": "N2/CISO",
+      "requires_approval": false,
+      "justification": "Criterio de escalado obligatorio: C2 confirmado y posible exfiltración de datos."
+    },
+    {
+      "action": "Bloquear el dominio e5.sk (y subdominios relacionados) en DNS/proxy como contención propuesta.",
+      "target": "IOC e5.sk",
+      "requires_approval": false,
+      "justification": "El N1 puede bloquear IOCs en proxy/correo/EDR sin aprobación. No afecta servicios legítimos de uso dual."
+    },
+    {
+      "action": "Proponer a N2 el aislamiento de la estación WS-MAD-1863 y revocación de sesiones (cambio de contraseña) para investigar si hay código ejecutado o robo de credenciales.",
+      "target": "WS-MAD-1863",
+      "requires_approval": true,
+      "justification": "Aislar un puesto de trabajo y revocar sesiones requieren aprobación N2. No ejecutar sin aprobación."
+    },
+    {
+      "action": "Revisar los DNS logs DNS-0069189 a DNS-0069194 y consultar EDR para identificar proceso/usuario causante del beaconing.",
+      "target": "WS-MAD-1863",
+      "requires_approval": false,
+      "justification": "Determinar si la exfiltración tuvo éxito (datos salientes) y si hay persistencia."
+    }
+  ],
+  "escalation": {
+    "escalate": true,
+    "to": "N2 de guardia",
+    "reason": "True_positive con C2/exfiltración DNS confirmado según TIP (e5.sk malicioso). Criterio de escalado obligatorio: C2 confirmado y posible salida de datos."
+  },
+  "open_questions": [
+    "¿Qué proceso/usuario de WS-MAD-1863 generó el beaconing (revisar EDR)?",
+    "¿Hubo transferencia de datos confirmada (tamaño de respuestas / payloads)?",
+    "Criticidad exacta del activo WS-MAD-1863 en CMDB para confirmar nivel de severidad."
+  ],
+  "executed_actions": [],
+  "triage_seconds": 25.09
+}

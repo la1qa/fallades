@@ -1,0 +1,125 @@
+{
+  "ticket_id": "TKT-20261007-001237",
+  "alert_ids": [
+    "ALR-20261007-001237"
+  ],
+  "title": "Subida masiva (>100 MB) de fotos RAW de campaña a wetransfer.com por C. Serra — benign_true_positive",
+  "verdict": "benign_true_positive",
+  "confidence": 0.85,
+  "severity": "low",
+  "severity_rationale": "Regla UC-DLP-001 = high. Activo/intidad más crítica = estación de trabajo WS-BCN-1375 (criticidad Media; usuario no privilegiado ni VIP). Cruce matriz high × Media = high. Se aplica UN ajuste de −1: no se exfiltraron datos personales ni confidenciales (personal_data_matches=0; el fichero es material RAW de campaña demarketing), el destino (wetransfer.com) es un servicio legítimo y benigno (TIP reputation=benign, confianza 90, dual-use) usado habitualmente por múltiples usuarios de la empresa (proxy action=allowed en decenas de usuarios), y no hay evidencia de preparación ni ejecución maliciosa (sin compresión del fichero en EDR, sin consultas masivas en sql_audit). Por tanto el efecto real (brecha de datos) no se produjo → baja de un nivel. Severidad final = low. Sin ajuste adicional (no aplica +1: sin datos personales/pagos/identidad VIP; no aplica un −1 segundo: el control fue audit, no bloqueante, pero no se precisa por ya estar en un ajuste).",
+  "affected": {
+    "users": [
+      "carmen.serra@tarvia.example"
+    ],
+    "hosts": [
+      "WS-BCN-1375 (10.10.2.136)"
+    ],
+    "business_services": [
+      "Puesto de trabajo"
+    ],
+    "customers": []
+  },
+  "summary": "La regla UC-DLP-001 dispara por volumen (>100 MB) al subir el fichero fotos_campaña_navidad_RAW.zip (≈786 MiB / 825.000.000 bytes) desde WS-BCN-1375 al servicio wetransfer.com a las 2026-10-07T09:30:09Z. La detección es correcta (el evento ocurrió y viola la política de volumen a almacenamiento externo), pero no implican datos personales ni confidenciales (matches=0: material RAW de campaña), el destino es un servicio de uso común y benigno (comprobado por proxy y TIP), y no hay indicios de intention maliciosa. Se clasifica como benign_true_positive y se cierra con severidad low tras confirmación humana de la justificación empresarial.",
+  "evidence": [
+    {
+      "source": "dlp",
+      "event_id": "DLP-0000115",
+      "finding": "web_upload de fotos_campaña_navidad_RAW.zip (file_size=825000000 bytes ≈ 786 MiB) a wetransfer.com por carmen.serra en WS-BCN-1375; policy='Volumen > 100 MB a almacenamiento externo'; action='audit' (NO bloqueado); matches={} → sin datos sensibles coincidentes. Timestamp 2026-10-07T09:30:09.592Z."
+    },
+    {
+      "source": "tip",
+      "event_id": "consultar_inteligencia(wetransfer.com)",
+      "finding": "wetransfer.com: reputation=benign, confidence=90, tags='legit-service,dual-use'. Servicio legítimo; el riesgo depende del uso. No es IOCs malicioso."
+    },
+    {
+      "source": "proxy",
+      "event_id": "PRX-0013417, PRX-0011034, PRX-0013740 y otros",
+      "finding": "wetransfer.com (dst_ip 198.18.0.40) accesado y 'allowed' por decenas de usuarios distintos de la empresa (lucia.cano, jordi.blanco, albert.coll, etc.) en la ventana. Patrón de uso empresarial habitual, no acceso puntual sospechoso."
+    },
+    {
+      "source": "user_directory",
+      "event_id": "consultar_usuario(carmen.serra)",
+      "finding": "carmen.serra: dept E-commerce, título 'Analista de Fraude', privileged=False, vip=False, status=active, hr_events=[] (sin bajas ni salida). Usuario legítimo sin contexto de riesgo."
+    },
+    {
+      "source": "cmdb",
+      "event_id": "consultar_activo(WS-BCN-1375)",
+      "finding": "WS-BCN-1375 (10.10.2.136): portátil Windows 11 23H2, criticality=Media, zone=HQ-USERS, internet_facing=False, sin vulnerabilidades. Activo de criticidad media; no frontal web."
+    },
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0007263..EDR-0018236",
+      "finding": "Actividad normal del usuario (msedge.exe, chrome.exe, OneDrive.exe, Acrobat.exe, OUTLOOK.EXE, ms-teams.exe). Sin proceso de compresión del fichero y sin consulta masiva preparatoria del zip."
+    },
+    {
+      "source": "sql_audit",
+      "event_id": "sin coincidencias",
+      "finding": "0 eventos de consulta masiva por caren.serra en la ventana (check 4 del runbook: sin staging de consultas previas)."
+    },
+    {
+      "source": "calendario_cambios",
+      "event_id": "sin cambios",
+      "finding": "No existe cambio aprobado ni flujo autorizado para esta subida (consulta 'wetransfer almacenamiento personal campaña' → vacío)."
+    },
+    {
+      "source": "dlp",
+      "event_id": "DLP-0000135",
+      "finding": "Evento INDEPENDIENTE, fuera del alcance de este ticket: 2026-10-08T09:13:23Z, caren.serra, canal USB, 'acta_comite.docx' (5,7 MB) a 'USB Kingston DT 32GB', policy='Información confidencial', action=audit, matches={}. Se documenta como hallazgo aparte para triage; no se agrupa (distinta política, destino y tipo)."
+    }
+  ],
+  "enrichment": [
+    {
+      "indicator": "wetransfer.com",
+      "type": "domain",
+      "source": "TIP interno",
+      "result": "benign / legit-service / dual-use (confidence 90); riesgo por uso, no por indicador."
+    },
+    {
+      "indicator": "10.10.2.136 (WS-BCN-1375)",
+      "type": "host",
+      "source": "CMDB",
+      "result": "portátil media, no internet-facing; no confundir con frontal web."
+    }
+  ],
+  "mitre": [
+    "Exfiltration / T1567.002 (Exfiltration to Cloud Storage)"
+  ],
+  "recommended_actions": [
+    {
+      "action": "Confirmar justificación empresarial con C. Serra y su gestor (S. Puig) para verificar si el envío de material de campaña vía WeTransfer es un flujo legítimo de activos creativos; sin evidencia de datos personales, puede cerrarse como benign_true_positive.",
+      "target": "revisión humana",
+      "requires_approval": false,
+      "justification": "Runbook RB-04: 'sin datos sensibles → cerrar."
+    },
+    {
+      "action": "No bloquear wetransfer.com a nivel global: es un servicio legítimo de uso común (dual-use) con uso extendido en la empresa; bloquearlo impactaría flujos legítimos. Si se requiere control, proponer (N2) restricción por usuario/grupo.",
+      "target": "proxy/DLP",
+      "requires_approval": true,
+      "justification": "Política sección 4: no bloquear servicios dual global sin N2."
+    },
+    {
+      "action": "Abrir/triar por separado el evento DLP-0000135 (USB, 'acta_comite.docx', policy 'Información confidencial'): aunque matches=0, es una transferencia USB de documento confidencial; evaluar si es otra alerta sin triar.",
+      "target": "otro ticket",
+      "requires_approval": false,
+      "justification": "Evento ajeno a este incidente; no agrupar por ser distinta política/destino."
+    },
+    {
+      "action": "Afinar la regla UC-DLP-001 para distinguir activaciones por sólo volumen (>100 MB) de transferencias con datos sensibles/coincidentes, reduciendo ruido de alertas.",
+      "target": "política DLP",
+      "requires_approval": false,
+      "justification": "Prevención de falsos positivos por volumen."
+    }
+  ],
+  "escalation": {
+    "escalate": false,
+    "to": "",
+    "reason": "Veredicto benign_true_positive con severidad low; no cumple criterios de escalado obligatorio (sección 5): no hay true_positive high/critical, ni ejecución de código malicioso, ni robo de credenciales/persistencia, ni datos personales/clientes que hayan salido (matches=0), ni fraude económico, ni cadena de alertas. Escalar a N2 solo si la revisión humana confirma datos sensibles en el contenido real del zip, intención maliciosa, o si DLP-0000135 resulta ser compromiso."
+  },
+  "open_questions": [
+    "¿Acepta el contenido del ZIP (material RAW de campaña) como legítimo tras verificación humana? Sin acceso al contenido real (fichero cifrado/no inspeccionado o fuera de alcance), la ausencia de matches es según el motor DLP.",
+    "Confirmar que DLP-0000135 (USB, documento confidencial) no pertenece a este incidente."
+  ],
+  "executed_actions": [],
+  "triage_seconds": 226.89
+}

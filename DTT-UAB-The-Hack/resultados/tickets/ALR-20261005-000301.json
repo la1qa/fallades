@@ -1,0 +1,105 @@
+{
+  "ticket_id": "TKT-20261005-000301",
+  "alert_ids": [
+    "ALR-20261005-000301"
+  ],
+  "title": "PowerShell con -EncodedCommand en WS-BCN-1174 — colección de inventario de software SCCM (benigno)",
+  "verdict": "benign_true_positive",
+  "confidence": 0.95,
+  "severity": "low",
+  "severity_rationale": "Matriz (apartado 2 de la política): severidad de la regla = medium; criticidad del activo WS-BCN-1174 = Media → cruce = **medium**. Se aplica un único ajuste de −1 por flujo autorizado (el comando es una tarea nativa del agente Configuration Manager / SCCM, ejecutada en toda la flota), lo que reduce a **low** (un solo salto, conforme al límite de 'máximo un ajuste en total'). Veredicto benign_true_positive. No corresponde ningún +1: no hay robo de credenciales, ni ejecución de código malicioso real, ni identidad VIP/privilegiada (el usuario del equipo, sergi.rubio, es usuario estándar no privilegiado; el proceso corre como SYSTEM en el curso normal del agente), ni datos de cliente/pago. No hay escalado obligatorio (apartado 5): es benign, no hay ejecución de código malicioso, robo de credenciales, persistencia, exfiltración ni fraude.",
+  "affected": {
+    "users": [
+      "sergi.rubio@tarvia.example (U1174, no privilegiado, no VIP, department Personas / Técnica de Nóminas)",
+      "NT AUTHORITY\\SYSTEM"
+    ],
+    "hosts": [
+      "WS-BCN-1174 (asset A00174, portátil Windows 11, criticidad Media, zona HQ-USERS, owner sergi.rubio)"
+    ],
+    "business_services": [
+      "Puesto de trabajo"
+    ],
+    "customers": []
+  },
+  "summary": "La alerta UC-EDR-002 (PowerShell con -EncodedCommand, media) se dispara porque el agente Configuration Manager (CcmExec.exe), corriendo como NT AUTHORITY\\SYSTEM en WS-BCN-1174, lanzó un powershell.exe con codificación base64. El comando descifrado es exactamente la tarea estándar de inventario de software de SCCM: $inv = Get-CimInstance Win32_Product | Select Name,Version | ConvertTo-Json | Out-File C:\\Windows\\CCM\\Inventory\\sw.json (escribe el inventario de software en la carpeta nativa del CCM). La evidencia confirma que la misma cadena, el mismo hash y el mismo árbol de proceso (CcmExec.exe → powershell.exe) se ejecutan en toda la flota de puestos de trabajo en la misma ventana (~06:00–07:55 UTC del 2026-10-05), es decir, es un inventario programado a escala organizacional, no una acción dirigida al equipo del usuario. No hay evidencia de persistencia, robo de credenciales (LSASS/navegador), movimiento lateral ni red maliciosa tras el evento; la actividad posterior del equipo (±24 h) es solo Office/OneDrive/Defender normales, firmados por Microsoft. Veredicto: benign_true_positive.",
+  "evidence": [
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0005329",
+      "finding": "Evento de ejecución que dispara la alerta: powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand (sha256 9a3171208537ad708648f69a6e2607af6738f804b99aef1709b309abf34773da), padre CcmExec.exe (PID 1880), NT AUTHORITY\\SYSTEM, integridad System, firma 'Microsoft Windows'. Descifrado: $inv = Get-CimInstance Win32_Product | Select Name,Version | ConvertTo-Json | Out-File C:\\Windows\\CCM\\Inventory\\sw.json. Coincide con el preview del ticket. Tarea nativa de inventario de software del Configuration Manager."
+    },
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0005357 / EDR-0005261 / EDR-0005353 / EDR-0005285 / EDR-0005310 / EDR-0005333 / EDR-0005282 / EDR-0005303 / EDR-0005311 / EDR-0005304 / EDR-0005269 / EDR-0005335 / EDR-0005268 / EDR-0005321 / EDR-0005262 / EDR-0005289 / EDR-0005326",
+      "finding": "Correlación de escala organizacional: la misma cadena -EncodedCommand (mismo base64 JABpAG4Adg... , mismo sha256 9a317120..., mismo padre CcmExec.exe y mismo descifrado) aparece en decenas de puestos distintos (WS-BCN-1993, WS-BCN-1542, WS-BCN-1776, WS-BCN-1438, WS-LOG-1700, WS-BCN-1503, WS-BCN-1370, WS-BCN-1835, WS-BCN-1536, WS-BCN-1287, WS-BCN-1216, WS-BCN-1493, WS-LOG-1766, WS-BCN-1243, WS-BCN-1037, WS-BCN-1829, WS-BCN-1126, WS-BCN-1329, WS-BCN-1220...) entre 06:00 y 06:29 UTC del 2026-10-05. Patrón de inventario de software programado a escala de flota, no ataque dirigido."
+    },
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0000849 / EDR-0000848 / EDR-0000854 / EDR-0000851 / EDR-0000853 / EDR-0000852 / EDR-0000850 / EDR-0006272",
+      "finding": "Actividad posterior en WS-BCN-1174 (±24 h): OneDrive.exe, svchost.exe (netsvcs), CcmExec.exe (reinicio normal del agente 10:43), MsMpEng.exe (Windows Defender), OUTLOOK.EXE, WINWORD.EXE. Todos binarios legítimos Microsoft Corporation, sin registry_set, sin acceso a LSASS ni navegadores, sin conexiones ni movimientos laterales sospechosos. No hay persistencia ni explotación tras el evento."
+    },
+    {
+      "source": "cmdb",
+      "event_id": "asset A00174 (WS-BCN-1174)",
+      "finding": "Portátil Windows 11 23H2, criticidad Media, zona HQ-USERS, service 'Puesto de trabajo', internet_facing=False, sin vulnerabilidades registradas."
+    },
+    {
+      "source": "directory",
+      "event_id": "user U1174 (sergi.rubio)",
+      "finding": "Usuario estándar, privileged=False, vip=False, MFA push, workstations WS-BCN-1174. Sin historial HR. No es el autor intencional del proceso; el proceso corre como SYSTEM en el curso del agente SCCM."
+    },
+    {
+      "source": "tip",
+      "event_id": "indicador 9a3171208537... (powershell.exe)",
+      "finding": "TIP = null. No es indicador limpio por defecto: se trata del binario legítimo powershell.exe firmado por Microsoft (path C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe); la ausencia en el TIP es normal y no indica malicia. CcmExec.exe: TIP=null (nombre de archivo legítimo, sin contenido malicioso)."
+    }
+  ],
+  "enrichment": [
+    {
+      "indicator": "9a3171208537ad708648f69a6e2607af6738f804b99aef1709b309abf34773da (powershell.exe)",
+      "type": "sha256",
+      "source": "tip",
+      "result": "Desconocido en el TIP (null). Significado: binario legítimo firmado por Microsoft; null esperado, no limpio por defecto ni malicioso."
+    },
+    {
+      "indicator": "CcmExec.exe",
+      "type": "filename",
+      "source": "tip",
+      "result": "Desconocido en el TIP (null). Agente Configuration Manager legítimo de Microsoft, path C:\\Windows\\CCM\\CcmExec.exe."
+    }
+  ],
+  "mitre": [
+    "T1059.001 (PowerShell) — técnica detectada; usada aquí de forma legítima por el agente SCCM para inventario de software."
+  ],
+  "recommended_actions": [
+    {
+      "action": "Cerrar el ticket como benign_true_positive sin contención",
+      "target": "ALR-20261005-000301 / EDR-0005329",
+      "requires_approval": false,
+      "justification": "Actividad autorizada nativa del Configuration Manager (inventario de software programado a escala de flota); no hay indicio de compromiso."
+    },
+    {
+      "action": "Registrar en el ticket la naturaleza SCCM del evento para evitar recurrencias",
+      "target": "regla UC-EDR-002 en puestos WS-BCN-*",
+      "requires_approval": false,
+      "justification": "Confirmado que la misma regla dispara en toda la flota por inventario de software; valorar una regla/exceptación documental del flujo conocido de CcmExec (sin tocar el agente)."
+    },
+    {
+      "action": "Confirmar la configuración del sitio de inventario de software del Configuration Manager (plan de inventario programado) como verificación humana opcional",
+      "target": "planning_config_sccm",
+      "requires_approval": false,
+      "justification": "No es una contención disruptiva: confirmar que la ventana de ejecución coincide con el plan oficial de inventario, solo si se desea auditoría adicional."
+    }
+  ],
+  "escalation": {
+    "escalate": false,
+    "to": "none",
+    "reason": "Veredicto benign_true_positive de severidad low. No se cumplen criterios de escalado obligatorio al N2 (apartado 5): no hay true_positive high/critical, ni ejecución de código malicioso, ni robo de credenciales, ni persistencia, ni salida de datos personales, ni fraude económico. Escalado según SLA de 'low': a 24 h, sin escalar."
+  },
+  "open_questions": [
+    "No existe cambio aprobado en el calendario para 'SCCM Inventory' / 'Configuration Manager' (consultar_cambios vacío). Esto es esperable porque el inventario de software se ejecuta por un plan del servidor SCCM a nivel de cliente, no siempre reflejado en el calendario local de cambios; no socava el veredicto, ya que el árbol de proceso, la firma y la correlación de escala organizacional lo confirman.",
+    "El TIP no tiene el hash de powershell.exe ni el nombre CcmExec.exe (conocidos en el TIP como nulos). Significa 'desconocido', no 'limpio por defecto'; el contexto y la firma legítima resuelven la ambigüedad."
+  ],
+  "executed_actions": [],
+  "triage_seconds": 134.83
+}

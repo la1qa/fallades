@@ -1,0 +1,128 @@
+{
+  "origen": "muestra",
+  "nota": "Selección para pruebas, no etiquetas de verdad. No confirma ningún incidente.",
+  "alert_ids": [
+    "ALR-20261007-011785",
+    "ALR-20261009-011791",
+    "ALR-20261010-011827",
+    "ALR-20261007-001237",
+    "ALR-20261011-011807",
+    "ALR-20261016-011821",
+    "ALR-20261010-002437",
+    "ALR-20261006-011826",
+    "ALR-20261005-000301",
+    "ALR-20261023-011915",
+    "ALR-20261011-011877",
+    "ALR-20261006-000501",
+    "ALR-20261014-004078",
+    "ALR-20261018-005422",
+    "ALR-20261005-000099"
+  ],
+  "casos": [
+    {
+      "alert_id": "ALR-20261007-011785",
+      "producto": "EMAIL_GW",
+      "runbook": "RB-01",
+      "severity_regla": "high",
+      "regla": "UC-EML-003"
+    },
+    {
+      "alert_id": "ALR-20261009-011791",
+      "producto": "EDR",
+      "runbook": "RB-02",
+      "severity_regla": "high",
+      "regla": "UC-EDR-001"
+    },
+    {
+      "alert_id": "ALR-20261010-011827",
+      "producto": "IDP",
+      "runbook": "RB-03",
+      "severity_regla": "high",
+      "regla": "UC-IDP-003"
+    },
+    {
+      "alert_id": "ALR-20261007-001237",
+      "producto": "DLP",
+      "runbook": "RB-04",
+      "severity_regla": "high",
+      "regla": "UC-DLP-001"
+    },
+    {
+      "alert_id": "ALR-20261011-011807",
+      "producto": "ECOM",
+      "runbook": "RB-05",
+      "severity_regla": "high",
+      "regla": "UC-WEB-003"
+    },
+    {
+      "alert_id": "ALR-20261016-011821",
+      "producto": "CLOUD",
+      "runbook": "RB-06",
+      "severity_regla": "high",
+      "regla": "UC-CLD-004"
+    },
+    {
+      "alert_id": "ALR-20261010-002437",
+      "producto": "AI_GATEWAY",
+      "runbook": "RB-07",
+      "severity_regla": "medium",
+      "regla": "UC-AI-001"
+    },
+    {
+      "alert_id": "ALR-20261006-011826",
+      "producto": "NGFW",
+      "runbook": "RB-09",
+      "severity_regla": "high",
+      "regla": "UC-NET-002"
+    },
+    {
+      "alert_id": "ALR-20261005-000301",
+      "producto": "EDR",
+      "runbook": "RB-02",
+      "severity_regla": "medium",
+      "regla": "UC-EDR-002"
+    },
+    {
+      "alert_id": "ALR-20261023-011915",
+      "producto": "AD",
+      "runbook": "RB-03",
+      "severity_regla": "high",
+      "regla": "UC-IDP-008"
+    },
+    {
+      "alert_id": "ALR-20261011-011877",
+      "producto": "VPN",
+      "runbook": "RB-03",
+      "severity_regla": "low",
+      "regla": "UC-VPN-001"
+    },
+    {
+      "alert_id": "ALR-20261006-000501",
+      "producto": "PROXY",
+      "runbook": "RB-09",
+      "severity_regla": "medium",
+      "regla": "UC-NET-001"
+    },
+    {
+      "alert_id": "ALR-20261014-004078",
+      "producto": "DNS",
+      "runbook": "RB-09",
+      "severity_regla": "medium",
+      "regla": "UC-NET-006"
+    },
+    {
+      "alert_id": "ALR-20261018-005422",
+      "producto": "WAF",
+      "runbook": "RB-05",
+      "severity_regla": "high",
+      "regla": "UC-WEB-002"
+    },
+    {
+      "alert_id": "ALR-20261005-000099",
+      "producto": "EMAIL_GW",
+      "runbook": "RB-01",
+      "severity_regla": "low",
+      "regla": "UC-EML-001"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+
+# Python
+__pycache__/
+*.pyc
+
+# Secretos
+.env
+.env.*
+*.key
+
+# Logs de ejecución
+*.log
+resultados/logs/

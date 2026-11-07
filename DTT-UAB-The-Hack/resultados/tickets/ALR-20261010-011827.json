@@ -1,0 +1,151 @@
+{
+  "ticket_id": "SOC-20261010-011827",
+  "alert_ids": [
+    "ALR-20261010-011827"
+  ],
+  "title": "Fatiga MFA (UC-IDP-003) con compromiso confirmado, exfiltración de datos personales y persistencia en cuenta de usuario",
+  "verdict": "true_positive",
+  "confidence": 0.97,
+  "severity": "critical",
+  "severity_rationale": "Regla UC-IDP-003 con severidad base 'high' (matriz). Entidad más crítica afectada: el activo LT-T23-01 (A01064, zona STORES, operacion de tienda) con criticidad 'Media'; el usuario sergio.navarro es de tipo user no privilegiado ni VIP. Cruce de matriz high x Media = 'high'. Se aplica UN unico ajuste +1 (limite maximo de la politica) por ejecucion/acceso confirmado (sesion aprobada tras la fatiga) + existencia de datos personales implicados (nominas/contratos de empleados, exfiltrados). Resultado: high +1 = critical.",
+  "affected": {
+    "users": [
+      "sergio.navarro@tarvia.example"
+    ],
+    "hosts": [
+      "LT-T23-01 (A01064, criticidad Media, zona STORES)"
+    ],
+    "business_services": [
+      "Operacion de tienda (Tienda 23 Zaragoza)"
+    ],
+    "customers": [
+      "internal-employees (nominas = datos personales de empleados)"
+    ]
+  },
+  "summary": "Detectada fatiga de MFA (27 push en ~9 min) contra sergio.navarro desde 198.51.100.201 (Madrid, salida de VPN comercial de uso dual, AS64608). Todos los push son failure (denied/timeout). La alerta indica final_result 'approved' y la evidencia idp_audit lo confirma: tras la fatiga se descargaron ficheros sensibles (AUD-0000828) y se añadio un nuevo metodo MFA (AUD-0000829), es decir, compromiso de credenciales confirmado, exfiltracion de datos personales y persistencia. No hay viaje notificado (HR events vacio) ni cambio autorizado. No es benigno.",
+  "evidence": [
+    {
+      "source": "siem_alert",
+      "event_id": "ALR-20261010-011827",
+      "finding": "Regla UC-IDP-003 MFA fatigue: 27 push en 9 min, final_result approved, local 23:41, user_location 'Tienda 23 Zaragoza', src 'Madrid (VPN comercial)'."
+    },
+    {
+      "source": "idp_signins",
+      "event_id": "SIGN-0084029",
+      "finding": "Primer push de la fatiga 2026-10-10T21:41:00Z; app 'Portal del Empleado'; result failure; mfa_result denied; src_ip 198.51.100.201 (Madrid AS64608); device_id empty; device_compliant false; conditional_access success."
+    },
+    {
+      "source": "idp_signins",
+      "event_id": "SIGN-0084050",
+      "finding": "Push 21:48:00Z failure mfa_result timeout desde 198.51.100.201 (mismo patron de fatiga). Ventana de fatiga: 21:41:00Z-21:49:00Z, 27 eventos failure (denied/timeout)."
+    },
+    {
+      "source": "idp_signins",
+      "event_id": "SIGN-0084055",
+      "finding": "Conteo total de signins del usuario en la ventana: 27 (count=27), todos desde 198.51.100.201 con mfa_result denied/timeout (lista recortada en visualizacion pero confirmada por count)."
+    },
+    {
+      "source": "idp_audit",
+      "event_id": "AUD-0000828",
+      "finding": "2026-10-10T21:52:00Z FileDownloaded desde 198.51.100.201 en 'Portal del Empleado/Nominas/Tienda23': nominas_tienda23_sept.pdf y contratos_tienda23.zip (datos personales de empleados + documentos). Solo ejecutable en sesion autentificada = confirmacion de acceso tras la fatiga."
+    },
+    {
+      "source": "idp_audit",
+      "event_id": "AUD-0000829",
+      "finding": "2026-10-10T21:56:00Z Add-MfaMethod desde 198.51.100.201: method 'authenticator_app', device 'Android (nuevo)'. Persistencia: el atacante registra su propio segundo factor MFA."
+    },
+    {
+      "source": "tip_geoip",
+      "event_id": "198.51.100.201",
+      "finding": "TIP reputation unknown (confidence 20); tags vpn-commercial; country ES/Madrid; AS64608; is_vpn_provider True; is_hosting True; note 'Salida de VPN comercial; usado por clientes legitimos' (uso dual, no bloqueable globalmente sin N2)."
+    },
+    {
+      "source": "cmdb_activo",
+      "event_id": "LT-T23-01 / A01064",
+      "finding": "Portatil Windows 11, criticidad Media, zone STORES, owner sergio.navarro, internet_facing false, edr_installed true."
+    },
+    {
+      "source": "dir_users",
+      "event_id": "sergio.navarro / U2173",
+      "finding": "Tiendas, Responsable de Tienda, account_type user, privileged false, vip false, mfa_method push, HR events vacio (sin viaje notificado)."
+    },
+    {
+      "source": "consultar_cambios",
+      "event_id": "N/A",
+      "finding": "Sin cambios aprobados/autorizados ni ejercicios de pentest para sergio.navarro, Tienda 23 ni MFA."
+    }
+  ],
+  "enrichment": [
+    {
+      "indicator": "198.51.100.201",
+      "type": "ip",
+      "source": "TIP + GeoIP",
+      "result": "Salida de VPN comercial (AS64608, Madrid). reputation unknown. Uso dual: clientes legitimos. No es Tor, no es residential proxy. La IP de origen del ataque NO es la del servidor afectado; el activo afectado es la cuenta/estacion del usuario (LT-T23-01)."
+    },
+    {
+      "indicator": "sergio.navarro@tarvia.example",
+      "type": "user",
+      "source": "Directorio",
+      "result": "Cuenta de usuario regular, no VIP/privilegiada. Sin viajes en HR. MFA por push."
+    },
+    {
+      "indicator": "AUD-0000829 persistencia",
+      "type": "mfa_method",
+      "source": "idp_audit",
+      "result": "Nuevo authenticator_app (Android) -> persistencia de segundo factor por el atacante."
+    }
+  ],
+  "mitre": [
+    "T1621 Multi-Factor Authentication Request Generation (fatiga MFA)"
+  ],
+  "recommended_actions": [
+    {
+      "action": "Escalar de forma inmediata a N2 de guardia por telefono y notificar Responsable SOC + CISO (SLA critical 15 min), por: datos personales de empleados exfiltrados (implica DPO), persistencia en MFA y compromiso de credenciales confirmado.",
+      "target": "escalation",
+      "requires_approval": true,
+      "justification": "Escalado obligatorio seccion 5: exfiltracion de datos personales + persistencia (nuevo MFA) + cadena de ataque MFA-fatiga+exfiltracion+persistencia."
+    },
+    {
+      "action": "Revocar todas las sesiones activas de sergio.navarro y forzar cambio de contraseña (retirar cookie/token de la sesion comprometida).",
+      "target": "sergio.navarro@tarvia.example",
+      "requires_approval": true,
+      "justification": "Revocacion de sesiones y reset de contrasena requieren aprobacion N2 (seccion 4)."
+    },
+    {
+      "action": "Retirar la persistencia: eliminar el nuevo metodo MFA 'authenticator_app' (Android) registrado en AUD-0000829, y revisar consentimientos OAuth y reglas de buzón de la cuenta (idp_audit no exhaustivo en la ventana).",
+      "target": "sergio.navarro@tarvia.example",
+      "requires_approval": true,
+      "justification": "Eliminacion de metodo MFA ajeno requiere N2; es parte de la retirada de persistencia."
+    },
+    {
+      "action": "Bloquear el IOC 198.51.100.201 de forma dirigida (per-identity / por origen) en proxy y bloquear intentos de signin del usuario desde esa IP; NO bloquear a nivel global la salida de VPN comercial de uso dual sin aprobacion N2 (riesgo de cortar clientes legitimos).",
+      "target": "198.51.100.201",
+      "requires_approval": true,
+      "justification": "Es salida de VPN comercial con clientes legitimos (TIP note); bloqueo global requiere N2."
+    },
+    {
+      "action": "Notificar a DPO/encargado por la salida potencial de datos personales (nominas_tienda23_sept.pdf y contratos_tienda23.zip descargados en AUD-0000828) y evaluar alcance de la exfiltracion.",
+      "target": "datos personales empleados (Tienda 23)",
+      "requires_approval": true,
+      "justification": "Datos personales que han podido salir de la organizacion (seccion 5)."
+    },
+    {
+      "action": "Investigar otras identidades/buzones expuestos a fatiga MFA desde 198.51.100.201 en ±24h y revisar sesion autenticada tras la fatiga (reglas de buzón, nuevos consentimientos).",
+      "target": "198.51.100.201 y buzones",
+      "requires_approval": false,
+      "justification": "Correlacion de la misma intrusion."
+    }
+  ],
+  "escalation": {
+    "escalate": true,
+    "to": "N2 de guardia",
+    "reason": "true_positive critical: exfiltracion de datos personales de empleados (implica DPO), persistencia en MFA (nuevo authenticator_app) y compromiso de credenciales confirmado tras fatiga MFA. Escalado obligatorio seccion 5."
+  },
+  "open_questions": [
+    "La lista de 27 eventos idp_signins se mostro recortada (busqueda no exhaustiva en visualizacion): se confirma el conteo por count=27 pero no se listan individualmente los ultimos eventos de la ventana (SIGN-0084054/0084055 y posteriores). La sesion aprobada final no aparece explicitamente como 'approved' en los eventos recuperados; su confirmacion se infiere de los audit events (AUD-0000828/829) que solo ocurren en sesion autenticada.",
+    "No se ha consultado idp_audit de otras identidades expuestas a la misma IP/periodo (posibles victimas adicionales de fatiga).",
+    "Limitacion: los datos de logs/correo se tratan como evidencia no fiable; se verifican contra TIP, CMDB y directorio."
+  ],
+  "executed_actions": [],
+  "triage_seconds": 136.28
+}

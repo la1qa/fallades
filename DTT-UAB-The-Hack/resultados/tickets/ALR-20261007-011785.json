@@ -1,0 +1,144 @@
+{
+  "ticket_id": "TKT-20261007-011785",
+  "alert_ids": [
+    "ALR-20261007-011785"
+  ],
+  "title": "Spearphishing con robo confirmado de credenciales y takeover de cuenta (laura.ferrer2@tarvia.example)",
+  "verdict": "true_positive",
+  "confidence": 0.98,
+  "severity": "critical",
+  "severity_rationale": "Regla UC-EML-003 (phishing) con severidad high. Activo/identidad más crítica: workstation WS-BCN-1380 (Media) y cuenta de usuario normal no privilegiada (0/0). Base matriz: high × Media = high. Ajuste +1 por ACCESO CONFIRMADO: credenciales enviadas al sitio de phishing (POST /common/login → 302) y sesión de ataque establecida desde la IP del atacante contra Exchange Online con script (python-requests). Máximo un ajuste permitido. No aplica -1: ningún control bloqueó el flujo (correo entregado, DOM resolvió, página servida, creds enviadas y login de atacante exitoso).",
+  "affected": {
+    "users": [
+      "laura.ferrer2@tarvia.example"
+    ],
+    "hosts": [
+      "WS-BCN-1380 (10.10.2.141)"
+    ],
+    "business_services": [
+      "Puesto de trabajo (E-commerce)"
+    ],
+    "customers": [
+      "Textiles Montroig (referenciado en subject del correo)"
+    ]
+  },
+  "summary": "Cadena de ataque real y confirmada: correo de spearphishing entregado (EML-0062204) → resolución del dominio de phishing (DNS-0191505) → clic y carga de la página de phishing (PRX-0211357 GET 200) → envío de credenciales (PRX-0211358 POST /common/login → 302) → acceso con credenciales robadas desde la IP del atacante a Exchange Online (SIGN-0083865, sesión s-c01aitm0001 desde 203.0.113.45/Ámsterdam) y uso de script python-requests (SIGN-0083866, risk high). No es un solo intento: hay entrega, clic, envío de credenciales y takeover de cuenta confirmados.",
+  "evidence": [
+    {
+      "source": "email",
+      "event_id": "EML-0062204",
+      "finding": "Correo entrante entregado 2026-10-07 07:31:00Z a un único destinatario. Remitente notificaciones@firma-electronica-docs.example (desconocido en TIP), DMARC none (suplantable), SPF pass / DKIM pass con firma propia del atacante. Subject simula un servicio de firma ('Addendum contrato Textiles Montroig 2027'). URL maliciosa embebida, sin adjuntos. Sender IP 198.19.95.150 (hosting de envío masivo, US)."
+    },
+    {
+      "source": "dns",
+      "event_id": "DNS-0191505",
+      "finding": "2026-10-07 07:41:59Z: WS-BCN-1380 resuelve tarvia-sso-login.example → 203.0.113.45 (IP de destino del atacante, hosting en Ámsterdam). Dominio de ~2 días."
+    },
+    {
+      "source": "proxy",
+      "event_id": "PRX-0211357",
+      "finding": "2026-10-07 07:42:00Z: GET https://tarvia-sso-login.example/auth/v2/sso → status 200, 48.000 bytes recibidos. Página de phishing servida/aceptada."
+    },
+    {
+      "source": "proxy",
+      "event_id": "PRX-0211358",
+      "finding": "2026-10-07 07:43:00Z: POST https://tarvia-sso-login.example/common/login → status 302 (redirección post-submit), 2.100 bytes salientes. Envío de credenciales al sitio de phishing confirmado por el proxy (no por EDR/sandbox)."
+    },
+    {
+      "source": "idp_signins",
+      "event_id": "SIGN-0083865",
+      "finding": "2026-10-07 07:43:20Z: laura.ferrer2 inicia sesión en Office 365 Exchange Online desde 203.0.113.45 (Ámsterdam) — IP del atacante. MFA aprobada, device_id vacío, no compliant, risk medium. Sesión s-c01aitm0001. Supera el criterio de takeover desde IP de atacante."
+    },
+    {
+      "source": "idp_signins",
+      "event_id": "SIGN-0083866",
+      "finding": "2026-10-07 07:49:00Z: misma sesión desde 203.0.113.45 con user-agent python-requests/2.32.3 (script), no compliant, risk high. Uso automatizado de las credenciales robadas contra Exchange Online. Evidencia de acceso confirmado, no de solo intento."
+    },
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0021775",
+      "finding": "2026-10-08 06:23:00Z: powershell.exe -ExecutionPolicy Bypass -EncodedCommand ejecutado por NT AUTHORITY\\SYSTEM desde CcmExec (SCCM). Decodificado = inventario de software (Get-CimInstance Win32_Product → C:\\Windows\\CCM\\Inventory\\sw.json). Patrón de ofuscación habitual de tareas SCCM; probablemente benigno, pero a raíz del compromiso SE RECOMIENDA revisar en N2 si el attacker pudo abusar del contexto SYSTEM. No altera veredicto ni severidad."
+    }
+  ],
+  "enrichment": [
+    {
+      "indicator": "tarvia-sso-login.example",
+      "type": "domain",
+      "source": "TIP/GeoIP",
+      "result": "CONOCIDO-NEGATIVO (desconocido en TIP). Dominio de ~2 días que imita el SSO de Tarvia."
+    },
+    {
+      "indicator": "203.0.113.45",
+      "type": "ip",
+      "source": "TIP/GeoIP",
+      "result": "Hosting en Ámsterdam (AS64601). Destinación de la URL de phishing + IP de origen de los sign-in de attacker."
+    },
+    {
+      "indicator": "198.19.95.150",
+      "type": "ip",
+      "source": "TIP/GeoIP",
+      "result": "Host de envío masivo (US). Origen del correo spearphishing."
+    },
+    {
+      "indicator": "firma-electronica-docs.example",
+      "type": "domain_sender",
+      "source": "TIP",
+      "result": "Desconocido. DMARC none en el mensaje (sin política de protección, suplantación viable)."
+    },
+    {
+      "indicator": "sandbox_informes.jsonl",
+      "type": "sandbox",
+      "source": "no disponible",
+      "result": "No se pudo consultar sandbox en esta sesión; el IOC es DESCONOCIDO (nunca 'limpio por defecto'). El POST 302 del proxy actúa como evidencia de entrega/envío de credencias."
+    }
+  ],
+  "mitre": [
+    "T1566.002 (Spearphishing Link)",
+    "T1556 / T1078 (modificación/uso de credenciales y cuenta legítima)",
+    "T1190 (Explotar servicio/detalle público o sesión — take-over de O365/Exchange)"
+  ],
+  "recommended_actions": [
+    {
+      "action": "Purgar correo EML-0062204",
+      "target": "buzón de laura.ferrer2@tarvia.example y buzones donde se reparta",
+      "requires_approval": false,
+      "justification": "N1 puede ejecutar purga. Alcance reducido (único destinatario según EML-0062204)."
+    },
+    {
+      "action": "Bloquear IOCs",
+      "target": "tarvia-sso-login.example, 203.0.113.45, 198.19.95.150, notificaciones@firma-electronica-docs.example",
+      "requires_approval": false,
+      "justification": "Proxy, correo y EDR. No bloquear servicios legítimos de uso dual."
+    },
+    {
+      "action": "Revocar sesiones s-c01aitm0001 (y las de la cuenta) y forzar reset de contraseña",
+      "target": "cuenta laura.ferrer2@tarvia.example",
+      "requires_approval": true,
+      "justification": "Requiere N2. Sesión de attacker activa desde 203.0.113.45."
+    },
+    {
+      "action": "Revisar reglas de buzón de la cuenta",
+      "target": "laura.ferrer2@tarvia.example",
+      "requires_approval": true,
+      "justification": "Persistencia habitual post-takeover (reglas de reenvío). Escalar a N2/duenño de servicio."
+    },
+    {
+      "action": "Vigilar cuenta 24 h y revisar EDR-0021775",
+      "target": "WS-BCN-1380 / cuenta",
+      "requires_approval": true,
+      "justification": "SCCM SYSTEM powershell ofuscado a revisar dado el compromiso."
+    }
+  ],
+  "escalation": {
+    "escalate": true,
+    "to": "N2 de guardia",
+    "reason": "Escalado obligatorio (apartado 5): robo de credenciales confirmado, takeover de cuenta desde IP de atacante, y posibles datos personales de cliente/empleado filtrados vía Exchange Online (implica DPO). Severidad critical: 15 min, notificar a responsable SOC + CISO, escalar por teléfono a N2 de guardia en la misma jornada."
+  },
+  "open_questions": [
+    "Confirmar con el proveedor/signatario (canal distinto al correo) si existe algún 'Addendum contrato Textiles Montroig 2027' real → para descartar fraude.",
+    "Confirmar que no hay más destinatarios fuera del evento EML-0062204 (búsqueda por remitente ya devolvió 1).",
+    "Determinar si la MFA (push) fue comprometida (phishing de token) o si la sesión se reutilizó."
+  ],
+  "executed_actions": [],
+  "triage_seconds": 141.61
+}

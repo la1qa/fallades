@@ -1,0 +1,47 @@
+{
+  "total_alertas": 11061,
+  "alertas_muestra": 150,
+  "por_producto": {
+    "WAF": 3483,
+    "IDP": 969,
+    "EDR": 2307,
+    "DLP": 62,
+    "EMAIL_GW": 2301,
+    "PROXY": 746,
+    "DNS": 652,
+    "AI_GATEWAY": 416,
+    "CLOUD": 53,
+    "NGFW": 37,
+    "VPN": 10,
+    "ECOM": 12,
+    "CICD": 11,
+    "AD": 2
+  },
+  "por_runbook": {
+    "RB-05": 3495,
+    "RB-03": 981,
+    "RB-02": 2307,
+    "RB-04": 62,
+    "RB-01": 2301,
+    "RB-09": 1425,
+    "RB-07": 416,
+    "RB-06": 53,
+    "RB-08": 10,
+    "RB-10": 11
+  },
+  "por_severidad_regla": {
+    "low": 6272,
+    "high": 775,
+    "medium": 4001,
+    "critical": 13
+  },
+  "base_matriz_calculable": 3818,
+  "base_matriz_pendiente": 7243,
+  "limitaciones": [
+    "Este pretriaje NO emite veredictos ni severidad FINAL; requiere investigación con logs e inteligencia.",
+    "Una IP externa es un origen, no un activo comprometido; CMDB solo resuelve hosts explícitos.",
+    "Coincidencias de entidades o rutas durante ±24h son pistas, NO grupos de incidentes confirmados.",
+    "No se comprueba el histórico de logs ni la autorización de cambios en esta fase.",
+    "La muestra de 150 no contiene critical ni los runbooks RB-08 y RB-10."
+  ]
+}

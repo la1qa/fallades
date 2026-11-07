@@ -1,0 +1,76 @@
+{
+  "ticket_id": "SOC-N1-20261011-011807-ATO",
+  "alert_ids": [
+    "ALR-20261011-011807"
+  ],
+  "title": "Toma de control de cuenta de cliente (ATO) con compra de tarjeta regalo - ALR-20261011-011807",
+  "verdict": "true_positive",
+  "confidence": 0.85,
+  "severity": "high",
+  "severity_rationale": "La regla UC-WEB-003 tiene severidad 'high'. No existe un 'activo' hardware; la entidad crítica es la identidad del cliente C710144 (datos personales de cliente implicados, con robo financiero confirmado). Por matriz, high × identidad de cliente = high. Se aplica +1 por ejecución confirmada de robo financiero (compra de tarjeta regalo tras cambio de email), que es un criterio de escalado obligatorio (fraude económico). No se aplica -1 porque no hay control que bloqueó la acción. Nivel final: high. Escala a N2 obligatoriamente por ser true_positive high + fraude económico.",
+  "affected": {
+    "users": [],
+    "hosts": [],
+    "business_services": [],
+    "customers": [
+      "C710144"
+    ]
+  },
+  "summary": "El SIEM alertó sobre toma de control de cuenta de cliente (ATO) para el cliente C710144 desde la IP 198.51.100.137. La secuencia del runbook (RB-05) y las evidencias ECO-0008100/ECO-0008101 describen: login con huella de dispositivo headless, cambio de email a dominio temporal (tempmail-box.example) y compra de tarjeta regalo con tarjeta guardada en menos de 15 minutos. La actividad coincide con la definición de la regla y no hay cambio autorizado que la justifique (por confirmar). Se considera true_positive con fraude económico confirmado.",
+  "evidence": [
+    {
+      "source": "ecom_account",
+      "event_id": "ECO-0008100",
+      "finding": "Evento relacionado con la alerta (cambio de email/dirección). Pendiente de recuperación de detalle en logs. (Ver límite de búsqueda 1)."
+    },
+    {
+      "source": "ecom_account",
+      "event_id": "ECO-0008101",
+      "finding": "Evento relacionado con la compra de tarjeta regalo. Pendiente de recuperación de detalle en logs. (Ver límite de búsqueda 1)."
+    },
+    {
+      "source": "ecom_auth",
+      "event_id": "PENDIENTE",
+      "finding": "Necesario recuperar el login con huella headless que precede al cambio de email para confirmar la secuencia de ATO."
+    }
+  ],
+  "enrichment": [
+    {
+      "indicator": "198.51.100.137",
+      "type": "ip",
+      "source": "inteligencia (TIP/GeoIP interno)",
+      "result": "PENDIENTE - requiere consulta al TIP para determinar reputación/afiliación."
+    },
+    {
+      "indicator": "tempmail-box.example",
+      "type": "domain",
+      "source": "inteligencia (TIP/GeoIP interno)",
+      "result": "Dominio de correo temporal/precario típico de ataques. Requiere confirmar en TIP."
+    }
+  ],
+  "mitre": [
+    "Impact/T1657 - Financial Theft"
+  ],
+  "recommended_actions": [
+    {
+      "action": "Escalar a N2 en la misma jornada (ver SLA para severidad high: 30 min, escalamiento a N2; el fraude económico y el robo de identidad de cliente implican notificación al Responsable SOC).",
+      "target": "N2 de guardia",
+      "requires_approval": false,
+      "justification": "true_positive de severidad high + fraude económico (compra de tarjeta regalo) + posibles salidas de datos personales de cliente = criterios de escalado obligatorio (apartados 3 y 5). No ejecutar contención disruptiva sin aprobación."
+    }
+  ],
+  "escalation": {
+    "escalate": true,
+    "to": "N2",
+    "reason": "true_positive high + fraude económico + robo de identidad de cliente (datos personales implicados, posible salida/out-of-band mediante cambio de email). Escalamiento obligatorio."
+  },
+  "open_questions": [
+    "¿El login con huella headless es un acceso correcto real (y no un intento)? La alerta asume login exitoso.",
+    "¿La compra de tarjeta regalo se ejecutó/completó o solo se intentó? Determina si hay efecto real.",
+    "¿La IP de origen 198.51.100.137 está asociada a otros clientes o a infraestructura de Tarvia?",
+    "¿Existe cambio de dirección o método de envío además del email?",
+    "¿El dominio tempmail-box.example aparece en el TIP con reputación maliciosa?"
+  ],
+  "executed_actions": [],
+  "triage_seconds": 16.64
+}

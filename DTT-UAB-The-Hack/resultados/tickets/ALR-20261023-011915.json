@@ -1,0 +1,116 @@
+{
+  "ticket_id": "SOC-2026-1023-011915",
+  "alert_ids": [
+    "ALR-20261023-011915"
+  ],
+  "title": "Alta en grupo privilegiado Backup Operators (UC-IDP-008 / T1098) vinculada a cambio autorizado CHG-2026-1078",
+  "verdict": "benign_true_positive",
+  "confidence": 0.85,
+  "severity": "low",
+  "severity_rationale": "Regla 'high' (UC-IDP-008) × activo más crítico: JUMP01 (criticality Alta) e identidad adm.aferrer (cuenta de servicio/administrada privilegiada). En la matriz, regla high × criticidad Alta da 'high' como base. Sin embargo, la detección está respaldada por un cambio aprobado (CHG-2026-1078), y la política del SOC (apartado 2) establece que una alerta asociada a un cambio aprobado/flujo autorizado se clasifica como benign_true_positive con severidad 'informational o low'. Se aplica la bajada permitida y se fija 'low'. No se requiere escalado obligatorio (no es un true_positive high/critical y no hay ejecución maliciosa fuera de lo autorizado).",
+  "affected": {
+    "users": [
+      "adm.aferrer@tarvia.example (Anna Ferrer, Ingeniero Cloud, cuenta privilegiada, VIP=No, MFA=FIDO2)"
+    ],
+    "hosts": [
+      "JUMP01 (10.20.6.61, servidor de salto, criticality Alta, zona DC-SERVERS)"
+    ],
+    "business_services": [
+      "Administración privilegiada"
+    ],
+    "customers": []
+  },
+  "summary": "La regla UC-IDP-008 detectó la alta de una cuenta en el grupo privilegiado Backup Operators, ejecutada por adm.aferrer desde JUMP01 y referenciada al cambio aprobado CHG-2026-1078. La cuenta usada es la cuenta de administración de Anna Ferrer, cuyo uso está restringido a JUMP01 (coincide con el host de origen). El cambio CHG-2026-1078 ('Alta de operador de copias en Backup Operators', solicitante Tecnología, scope Directorio Activo) coincide exactamente con la acción detectada. No hay eventos HR (viajes/bajas), la cuenta no es VIP, MFA=FIDO2 y la IP del host es privada interna sin reputación maliciosa en el TIP. Todo apunta a una actividad autorizada (benign_true_positive).",
+  "evidence": [
+    {
+      "source": "consaltar_usuario",
+      "event_id": "U1447A",
+      "finding": "adm.aferrer = Anna Ferrer, Ingeniero Cloud, department Tecnología, privileged=True, VIP=False, account_type=admin, mfa_method=FIDO2, status=active, HR events=none. Nota: 'Solo debe usarse desde JUMP01'."
+    },
+    {
+      "source": "consultar_cambios",
+      "event_id": "CHG-2026-1078",
+      "finding": "Cambio aprobado/autorizado: 'Alta de operador de copias en Backup Operators', solicitante Tecnología, scope Directorio Activo, ventana 2026-10-23 10:00-12:00. Propósito coincide con la detección."
+    },
+    {
+      "source": "consultar_activo",
+      "event_id": "A01163/JUMP01",
+      "finding": "JUMP01 es servidor de salto Windows Server 2022, criticality Alta, zona DC-SERVERS, servicio 'Administración privilegiada', internet_facing=False, EDR instalado, sin vulnerabilidades."
+    },
+    {
+      "source": "consultar_inteligencia",
+      "event_id": "TIP/GeoIP 10.20.6.61",
+      "finding": "IP 10.20.6.61 (privada RFC1918): TIP=null, geo=null. Sin reputación maliciosa; infraestructura interna del salt box."
+    },
+    {
+      "source": "idp_audit/edr_events/firewall",
+      "event_id": "ADE-0000572 (related_event)",
+      "finding": "El evento AD relacionado ADE-0000572 NO es recuperable en las fuentes de log disponibles (idp_audit, edr_events, firewall, idp_signins). Límite de búsqueda: la fuente de eventos de AD no está entre las fuentes consultables; se toma el evento del alert como único dato, sin poder verificar timestamp ni detalle."
+    },
+    {
+      "source": "busqueda_logica",
+      "event_id": "correlacion adm.aferrer/JUMP01/Backup Operators",
+      "finding": "Búsquedas de adm.aferrer, JUMP01 y 'Backup Operators' en idp_audit, idp_signins, edr_events y firewall (±24 h) devuelven 0 resultados. No hay evidencia de actividad posterior de la sesión ni de uso de la cuenta desde otros orígenes dentro de las fuentes consultadas; no es evidencia de inexistencia, sino de cobertura de logs insuficiente."
+    }
+  ],
+  "enrichment": [
+    {
+      "indicator": "adm.aferrer",
+      "type": "identity",
+      "source": "consaltar_usuario",
+      "result": "Cuenta de servicio/administrada privilegiada, no VIP, FIDO2."
+    },
+    {
+      "indicator": "10.20.6.61",
+      "type": "ip",
+      "source": "consultar_inteligencia",
+      "result": "Privada interna, sin marcación maliciosa en TIP/GeoIP."
+    },
+    {
+      "indicator": "CHG-2026-1078",
+      "type": "change_ticket",
+      "source": "consultar_cambios",
+      "result": "Cambio autorizado; coincide con la acción detectada (alta en Backup Operators)."
+    }
+  ],
+  "mitre": [
+    "T1098 (Account Manipulation) - Persistence"
+  ],
+  "recommended_actions": [
+    {
+      "action": "Confirmar el timestamp del evento AD ADE-0000572 dentro de la ventana aprobada de CHG-2026-1078 (2026-10-23 10:00-12:00). La alerta se disparó a las 09:08 UTC, 52 min antes de la ventana aprobada; sin la fuente AD disponible no se puede verificar si la alta se ejecutó dentro o fuera del intervalo. Si cafuera de la ventana → reevaluar como true_positive (posible ejecución fuera de cambio autorizado).",
+      "target": "event ADE-0000572",
+      "requires_approval": false,
+      "justification": "Resolver la discrepancia temporal es el único punto débil de la justificación de autorización."
+    },
+    {
+      "action": "Verificar que la identidad del nuevo miembro añadido al grupo Backup Operators coincide con la solicitud del cambio (cambio por un miembro nuevo del equipo de sistemas).",
+      "target": "nuevo miembro de Backup Operators",
+      "requires_approval": false,
+      "justification": "Confirmar trazabilidad completo del cambio autorizado."
+    },
+    {
+      "action": "Cerrar el ticket como benign_true_positive con severidad low tras confirmar los puntos anteriores. No aplicar contención (la actividad está autorizada por cambio aprobado).",
+      "target": "ticket",
+      "requires_approval": false,
+      "justification": "No hay evidencia de compromiso; contención no procede."
+    },
+    {
+      "action": "Para ampliar cobertura: habilitar el ingesta de eventos de Directorio Activo (ADE-*) en fuentes consultables o consultar el logs del DC/audit AD directamente, dado que ADE-0000572 y la actividad posterior de la sesión no son recuperables ahora.",
+      "target": "fuentes de logs",
+      "requires_approval": false,
+      "justification": "Límite de búsqueda detectado en el triaje."
+    }
+  ],
+  "escalation": {
+    "escalate": false,
+    "to": "ninguno (benign_true_positive)",
+    "reason": "No se cumple ningun criterio de escalado obligatorio (apartado 5): no es true_positive high/critical, no hay ejecución maliciosa fuera de lo autorizado, no hay salida de datos personales ni fraude económico. Se recomienda revisión humana de los dos puntos de la recomendación para confirmar la autorización antes del cierre."
+  },
+  "open_questions": [
+    "¿El evento ADE-0000572 se ejecutó dentro de la ventana aprobada de CHG-2026-1078?",
+    "¿Cuál es la identidad exacta del nuevo miembro de Backup Operators y coincide con la solicitud?"
+  ],
+  "executed_actions": [],
+  "triage_seconds": 106.48
+}

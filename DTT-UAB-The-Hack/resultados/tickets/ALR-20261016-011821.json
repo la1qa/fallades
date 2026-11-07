@@ -1,0 +1,160 @@
+{
+  "ticket_id": "TIX-20261016-011821",
+  "alert_ids": [
+    "ALR-20261016-011821"
+  ],
+  "title": "Exfiltración de ~112 GB desde bucket crítico tarvia-backups-prod usando identidad de servicio comprometida (backup-sync / svc_ecom_deploy)",
+  "verdict": "true_positive",
+  "confidence": 0.95,
+  "severity": "critical",
+  "severity_rationale": "Regla UC-CLD-004 (severity=high) × activo tarvia-backups-prod clasificado Crítica = 'critical' en la matriz (fila 'high', columna 'Crítica'). Ajuste +1 por datos personales/cliente (copias de CRM_PROD) e identidad de servicio privilegiada, pero ya se encuentra en el tope 'critical' (máximo un nivel). No aplica −1: no hubo control que bloqueara la descarga antes de producir efecto (todos los GetObject sin errorCode/403) y hay actividad posterior nula detectada, no reducción. Severidad final = critical.",
+  "affected": {
+    "users": [
+      "backup-sync (IAM service account)",
+      "svc_ecom_deploy (cuenta de servicio comprometida)"
+    ],
+    "hosts": [],
+    "business_services": [
+      "CRM_PROD / copias de base de datos"
+    ],
+    "customers": [
+      "Cliente/s (datos personales en copias de CRM) — implica DPO"
+    ]
+  },
+  "summary": "Cadena de ataque confirmada sobre la nube AWS (tarvia-prod). En 2026-10-15T00:14:55Z la cuenta de despliegue svc_ecom_deploy (clave AKIATARVIA7XQ2DEPLY) se usó desde una IP externa no gestionada (2.57.121.25, Rumanía, hosting anónimo) con user agent de Kali Linux para crear una nueva clave de acceso para la identidad de servicio 'backup-sync' (persistencia/robo de credenciales). Desde 2026-10-16T00:40:00Z esa clave recién creada descargó 1.400+ GetObject (~112 GB) del bucket crítico tarvia-backups-prod, prefijo sql/CRM_PROD/ (copias de la base de datos de CRM), todas con éxito (sin errorCode/403). La alerta se dispara a las 00:51:59Z; no se detectó actividad posterior de backup-sync tras las 00:52:00Z (límite de búsqueda). No hay cambio aprobado ni pipeline de Terraform conocido. La clave svc_ecom_deploy opera normalmente desde 172.16.10.21 (interno) con aws-cli/2.17.0 sin Kali, por lo que el evento desde 2.57.121.25 confirma su compromiso.",
+  "evidence": [
+    {
+      "source": "cloudtrail",
+      "event_id": "CT-0005456",
+      "finding": "CreateAccessKey para userName 'backup-sync' realizado por IAM user svc_ecom_deploy (accessKeyId AKIATARVIA7XQ2DEPLY) desde sourceIPAddress 2.57.121.25, userAgent 'aws-cli/2.13.0 Python/3.11 Linux (kali)', timestamp 2026-10-15T00:14:55Z, errorCode vacío. → Persistencia / robo de credenciales de la cuenta de despliegue."
+    },
+    {
+      "source": "cloudtrail",
+      "event_id": "CT-0005457 a CT-0005486 (muestra de los 1.400)",
+      "finding": "GetObject sobre bucket tarvia-backups-prod, prefijo sql/CRM_PROD/*.bak, por IAM user backup-sync (accessKeyId AKIATARVIABKPSYNC01) desde 2.57.121.25, user agent Kali, sin errorCode, bytes_transferred por objeto entre 44 MB y 120 MB. → Exfiltración ejecutada y exitosa desde el bucket crítico."
+    },
+    {
+      "source": "cloudtrail",
+      "event_id": "CT-0000735.. (múltiples, ej. CT-0000735 2026-10-09)",
+      "finding": "svc_ecom_deploy (AKIATARVIA7XQ2DEPLY) usando normalmente sourceIPAddress 172.16.10.21 y userAgent 'aws-cli/2.17.0 Python/3.11 Linux' (sin Kali) sobre bucket tarvia-media-public (PutObject/ListObjects/GetObject). → Baseline legítimo del despliegue; confirma que el acceso desde 2.57.121.25 es anómalo."
+    },
+    {
+      "source": "cloudtrail",
+      "event_id": "CT-0005467.. (post-00:50)",
+      "finding": "Búsqueda exhaustiva de actividad 'backup-sync' tras 2026-10-16T00:52:00Z hasta 06:00Z → count 0. → Sin actividad posterior detectada en la ventana."
+    },
+    {
+      "source": "cloudtrail",
+      "event_id": "GetCallerIdentity/List* en ventana 2026-10-15T00:51:59Z–2026-10-16T01:00:00Z",
+      "finding": "Búsqueda → count 0. → Sin eventos de reconocimiento con esa clave en la ventana."
+    },
+    {
+      "source": "TIP/GeoIP",
+      "event_id": "indicador 2.57.121.25",
+      "finding": "TIP interno: null (DESCONOCIDO, no limpio). GeoIP: Timisoara (RO), AS47890 UNMANAGED LTD, is_hosting=true, no VPN/TOR. → Origen anónimo/no gestionado, coherente con actividad atacante."
+    },
+    {
+      "source": "cambios_aprobados",
+      "event_id": "consulta Terraform/backup-sync/svc_ecom_deploy",
+      "finding": "Sin cambios aprobados ni ejercicios de pentest ni actividades autorizadas vinculados. → No es un flujo autorizado."
+    },
+    {
+      "source": "directorio",
+      "event_id": "consulta usuario 'backup-sync'",
+      "finding": "not_found (identidad de tipo servicio, no humana). Contexto: cuenta de backup, no usuario con rol documentado."
+    }
+  ],
+  "enrichment": [
+    {
+      "indicator": "2.57.121.25",
+      "type": "ip",
+      "source": "TIP/GeoIP",
+      "result": "DESCONOCIDO en TIP; Rumanía, hosting anónimo (UNMANAGED LTD). No usar como 'limpio por defecto'."
+    },
+    {
+      "indicator": "AKIATARVIABKPSYNC01",
+      "type": "access_key",
+      "source": "cloudtrail",
+      "result": "Clave creada por el atacante el 2026-10-15 para backup-sync; usada solo desde 2.57.121.25."
+    },
+    {
+      "indicator": "AKIATARVIA7XQ2DEPLY",
+      "type": "access_key",
+      "source": "cloudtrail",
+      "result": "Clave de svc_ecom_deploy comprometida; baseline desde 172.16.10.21, usada desde 2.57.121.25 para CreateAccessKey anómalo."
+    },
+    {
+      "indicator": "tarvia-backups-prod",
+      "type": "bucket",
+      "source": "alerta",
+      "result": "Clasificación Crítica ('copias del CRM'); prefijo afectado sql/CRM_PROD/ (datos de base de datos de CRM)."
+    },
+    {
+      "indicator": "userAgent 'aws-cli/2.13.0 ... (kali)', source '2.57.121.25'",
+      "type": "tooling",
+      "source": "cloudtrail",
+      "result": "Tooling de atacante (Kali Linux) vs baseline interno aws-cli/2.17.0 sin Kali."
+    }
+  ],
+  "mitre": [
+    "T1078 Valid Accounts (cuentas de servicio IAM comprometidas)",
+    "T1136 Create Account (CreateAccessKey para backup-sync)",
+    "T1530 Data from Cloud Storage - Exfiltration (1.400+ GetObject ~112 GB)"
+  ],
+  "recommended_actions": [
+    {
+      "action": "Escalar inmediatamente a N2 por teléfono (SLA critical 15 min) y notificar al responsable SOC y CISO.",
+      "target": "escalation",
+      "requires_approval": false,
+      "justification": "true_positive critical; escalado obligatorio."
+    },
+    {
+      "action": "Implicar al DPO: ~112 GB de copias de CRM_PROD (sql/CRM_PROD/) presumiblemente con datos personales de clientes/empleados que han podido salir de la organización.",
+      "target": "compliance",
+      "requires_approval": false,
+      "justification": "Salida de datos personales → obligación de notificación DPO/autoridad."
+    },
+    {
+      "action": "PROPOSICIÓN de contención (N1 propone, NO ejecuta): desactivar las claves AKIATARVIABKPSYNC01 (backup-sync) y AKIATARVIA7XQ2DEPLY (svc_ecom_deploy). Requiere aprobación N2 (desactivar claves cloud).",
+      "target": "containment",
+      "requires_approval": true,
+      "justification": "Cortar acceso y prevenir re-exfiltración; bloque antes de que la clave se reintente."
+    },
+    {
+      "action": "PROPOSICIÓN (requiere N2): revocar sesiones/contraseñas de svc_ecom_deploy, revisar su política IAM yauditar creaciones no autorizadas (usuarios, claves, políticas, roles).",
+      "target": "containment",
+      "requires_approval": true,
+      "justification": "La cuenta de despliegue está comprometida; revisar alcance del pivote."
+    },
+    {
+      "action": "PROPOSICIÓN (N1 puede ejecutar): bloquear el IOC 2.57.121.25 en proxy y EDR. No bloquear servicios legítimos de uso global (mega.nz, AnyDesk) a nivel global sin N2.",
+      "target": "containment",
+      "requires_approval": false,
+      "justification": "Origen anónimo en uso activo contra infra Tarvia."
+    },
+    {
+      "action": "Preservar evidencia (CloudTrail, retención de logs) y cuantificar el volumen exacto y el contenido de datos personales de las ~112 GB descargadas para determinar notificación regulatoria.",
+      "target": "investigation",
+      "requires_approval": false,
+      "justification": "Confirmar magnitud del incidente y obligations legales."
+    },
+    {
+      "action": "Rotar credenciales y revisar otros buckets a los que svc_ecom_deploy podía acceder (ej. tarvia-media-public) por si hubo acceso lateral.",
+      "target": "investigation",
+      "requires_approval": false,
+      "justification": "Contener alcance del compromiso de la cuenta de despliegue."
+    }
+  ],
+  "escalation": {
+    "escalate": true,
+    "to": "N2 de guardia",
+    "reason": "true_positive critical; robo de credenciales de cuenta de servicio, persistencia (CreateAccessKey) y exfiltración confirmada de ~112 GB de bucket crítico con datos personales (implica DPO). Escalado obligatorio y notificación a responsable SOC + CISO."
+  },
+  "open_questions": [
+    "Confirmar con DPO/classificación si sql/CRM_PROD/ contiene datos personales de clientes y volumen exacto afectado.",
+    "Verificar si el atacante creó otras identidades/claves (revisar CreateAccessKey/PutUserPolicy en toda la cuenta tras 2026-10-15).",
+    "Confirmar si svc_ecom_deploy tuvo acceso a otros buckets sensibles más allá de tarvia-media-public."
+  ],
+  "executed_actions": [],
+  "triage_seconds": 218.59
+}

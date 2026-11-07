@@ -146,7 +146,7 @@ def main():
         return
     if not os.getenv('DCC_API_KEY'):
         raise SystemExit('Falta el secreto DCC_API_KEY en Codespaces; no lo pegues en el código.')
-    agente = root / 'agente_soc_dcc.py'
+    agente = root / 'agente_soc_dcc_v2.py'
     if not agente.exists():
         raise SystemExit(f'No existe {agente}')
     try:

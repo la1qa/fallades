@@ -5,7 +5,7 @@ Ejecutar desde DTT-UAB-The-Hack:
     python -m streamlit run dashboard.py --server.address 0.0.0.0 --server.port 8501
 
 Requisitos: API SOC en localhost:8000, DCC_API_KEY disponible en el entorno,
-y agente_soc_dcc.py en esta misma carpeta.
+y agente_soc_dcc_v2.py en esta misma carpeta.
 
 Seguridad: solo usa GET contra Tarvia. No ejecuta contenciones ni aprobaciones.
 Las revisiones humanas se guardan en archivos locales, no en la API del SOC.
@@ -32,7 +32,7 @@ ALERTS_PATH = ROOT / "03_alertas" / "alertas_muestra_desarrollo.jsonl"
 ALL_ALERTS_PATH = ROOT / "03_alertas" / "alertas.jsonl"
 SCHEMA_PATH = ROOT / "01_contexto" / "ticket_salida.schema.json"
 LATEST_TICKET = ROOT / "ticket_generado.json"
-AGENT_PATH = ROOT / "agente_soc_dcc.py"
+AGENT_PATH = ROOT / "agente_soc_dcc_v2.py"
 TICKETS_DIR = ROOT / "tickets_dashboard"
 REVIEWS_DIR = ROOT / "revisiones_dashboard"
 LOGS_DIR = ROOT / "logs_dashboard"
@@ -125,7 +125,7 @@ def run_agent(alert_id: str, model: str, max_turns: int) -> tuple[dict | None, s
     dos investigaciones simultáneas desde diferentes sesiones del dashboard.
     """
     if not AGENT_PATH.is_file():
-        st.error("Falta agente_soc_dcc.py junto a dashboard.py")
+        st.error("Falta agente_soc_dcc_v2.py junto a dashboard.py")
         return None, ""
     if not os.environ.get("DCC_API_KEY"):
         st.error("No se encuentra DCC_API_KEY en los secretos del Codespace.")

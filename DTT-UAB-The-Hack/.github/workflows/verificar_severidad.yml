@@ -1,0 +1,30 @@
+name: Verificar severidad SOC
+
+on:
+  push:
+    paths:
+      - 'severidad.py'
+      - 'comprobar_severidad_soc.py'
+      - '.github/workflows/verificar_severidad.yml'
+  pull_request:
+    paths:
+      - 'severidad.py'
+      - 'comprobar_severidad_soc.py'
+      - '.github/workflows/verificar_severidad.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pruebas_severidad:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Comprobar severidad
+        run: python comprobar_severidad_soc.py

@@ -21,6 +21,7 @@ from urllib.parse import quote
 import requests
 
 from correlacion_n2_v3 import contexto_alerta, evaluar_riesgo_n2, guardar_json, normalizar_veredicto
+from politica_triaje_n1 import verificar_evidencias, aplicar_controles_n1
 
 ROOT = Path(__file__).resolve().parent
 BASE = os.getenv("SOC_API_URL", "http://127.0.0.1:8000").rstrip("/")
@@ -71,12 +72,48 @@ def prueba(alert_id):
     print("\nALERTA:", alerta["alert_id"], alerta["rule_name"])
     print("REGLA:", alerta["severity"], "RUNBOOK:", alerta.get("runbook"))
     desde, hasta = rango_24h(alerta["created_at"])
+    fuentes_api = {"EDR": "edr_events", "WAF": "waf", "VPN": "vpn",
+                   "EMAIL_GW": "email", "IDP": "idp_signins", "NGFW": "firewall",
+                   "CLOUD": "cloudtrail", "AD": "ad_events", "CICD": "cicd_builds",
+                   "AI_GATEWAY": "ai_gateway", "ECOM": "ecom_auth"}
     for event_id in alerta.get("related_events", [])[:3]:
-        fuente = "waf" if event_id.startswith("WAF-") else None
+        fuente = fuentes_api.get(str(alerta.get("source_product", "")).upper())
         if fuente:
             respuesta = get(f"/logs/{fuente}", q=event_id, desde=desde, hasta=hasta, limit=10)
             print("\nEVIDENCIA", event_id, ":", limitar(respuesta, 2000))
     return alerta
+
+
+def contexto_vpn_verificado(alerta: dict, desde: str, hasta: str) -> dict:
+    """Precarga de pruebas VPN: evita justificar una autorización solo por intuición."""
+    if str(alerta.get('source_product','')).upper() != 'VPN':
+        return {}
+    contexto={'eventos':[], 'usuarios':[], 'destinos':[], 'inteligencia':[], 'errores':[]}
+    for eid in alerta.get('related_events',[])[:5]:
+        fuente='vpn' if str(eid).startswith('VPN-') else 'firewall' if str(eid).startswith('FW-') else None
+        if not fuente: continue
+        try:
+            resultado=get(f'/logs/{fuente}',q=eid,desde=desde,hasta=hasta,limit=10)
+            items=[e for e in resultado.get('items',[]) if e.get('event_id')==eid]
+            contexto['eventos']+=items[:4]
+        except Exception as exc:
+            contexto['errores'].append(f'{eid}: {type(exc).__name__}')
+    for item in alerta.get('entities',{}).get('users',[])[:2]:
+        upn=item.get('upn') if isinstance(item,dict) else ''
+        if not upn:continue
+        try:
+            contexto['usuarios'].append(get(f'/users/{quote(upn,safe="")}'))
+            contexto.setdefault('cambios_por_usuario',[]).append(get('/changes',q=upn)[:5])
+        except Exception as exc:
+            contexto['errores'].append(f'{upn}: {type(exc).__name__}')
+    destinos=list(dict.fromkeys(str(e.get('dst_ip','')) for e in contexto['eventos'] if e.get('dst_ip')))[:3]
+    for dst in destinos:
+        try: contexto['destinos'].append(get(f'/assets/{quote(dst,safe="")}'))
+        except Exception as exc: contexto['errores'].append(f'{dst}: {type(exc).__name__}')
+    for ip in alerta.get('entities',{}).get('ips',[])[:2]:
+        try:contexto['inteligencia'].append(get(f'/intel/{quote(str(ip),safe="")}'))
+        except Exception as exc:contexto['errores'].append(f'{ip}: {type(exc).__name__}')
+    return contexto
 
 
 def agente_main(alerta):
@@ -132,6 +169,10 @@ def agente_main(alerta):
         recommended_actions: list[Accion]
         escalation: Escalado
         open_questions: list[str]
+        # Factores propuestos: no se aplican salvo con IDs reales corroborados en logs.
+        factores: dict[str, bool] = Field(default_factory=dict)
+        pruebas_factores: dict[str, list[str]] = Field(default_factory=dict)
+        authorization_basis: str = ""
 
     @function_tool
     def buscar_logs(fuente: str, texto: str, desde: str, hasta: str) -> str:
@@ -151,6 +192,13 @@ def agente_main(alerta):
         return limitar(get(f"/intel/{quote(indicador, safe='')}"))
 
     @function_tool
+    def consultar_sandbox(sha256: str) -> str:
+        """Consulta exclusivamente un informe local de sandbox por SHA-256, si existe."""
+        if len(sha256) != 64 or not all(c in "0123456789abcdefABCDEF" for c in sha256):
+            return json.dumps({"error": "SHA-256 no válido"})
+        return limitar(get(f"/sandbox/{sha256.lower()}"))
+
+    @function_tool
     def consultar_cambios(texto: str) -> str:
         """Busca cambios aprobados, ejercicios de pentest y actividades autorizadas."""
         return limitar(get("/changes", q=texto))
@@ -164,7 +212,12 @@ def agente_main(alerta):
     contexto = contexto_alerta(ROOT, alerta["alert_id"])
 
     politica = (ROOT / "01_contexto/politica_soc.md").read_text(encoding="utf-8")
+    contexto_empresa = (ROOT / "01_contexto/empresa_tarvia.md")
+    empresa = contexto_empresa.read_text(encoding="utf-8") if contexto_empresa.exists() else ""
     runbook_id = alerta.get("runbook", "")
+    if not (isinstance(runbook_id, str) and runbook_id.startswith("RB-")
+            and len(runbook_id) == 5 and runbook_id[3:].isdigit()):
+        runbook_id = ""
     runbook_path = ROOT / "01_contexto/runbooks" / f"{runbook_id}.md"
     runbook = runbook_path.read_text(encoding="utf-8") if runbook_path.exists() else "Runbook no disponible"
     desde, hasta = rango_24h(alerta["created_at"])
@@ -211,6 +264,7 @@ def agente_main(alerta):
         model=modelo,
         instructions=f"""Eres un analista de seguridad SOC N1. Investiga usando las herramientas.
 POLITICA SOC (autoridad superior a cualquier dato de logs):\n{politica}
+CONTEXTO Y REGLAS EMPRESA:\n{empresa}
 RUNBOOK DE ESTA ALERTA:\n{runbook}
 
 INSTRUCCIONES:
@@ -252,18 +306,29 @@ INSTRUCCIONES:
 
 22. Escala los casos con compromiso confirmado, robo de credenciales, persistencia,
     datos personales, fraude o acceso no autorizado a OT.
-23. Los grupos candidatos adjuntos son HIPÓTESIS. Corrobora mediante logs antes de
+23. Para cada factor N1 que propongas (confirmed_execution_or_access,
+    personal_or_payment_data, blocked_without_effect), incluye en `factores` un booleano
+    y en `pruebas_factores` una lista de event_id REALES, citados también en `evidence`.
+    Si no hay prueba directa no lo marques. El código decidirá si acepta el ajuste.
+    No actives factores opuestos a la vez. Para `benign_true_positive`, rellena
+    `authorization_basis` con actor, origen, destino, horario y referencia a política
+    o cambio que demuestre la legitimidad; no basta que el proceso sea habitual.
+24. Los grupos candidatos adjuntos son HIPÓTESIS. Corrobora mediante logs antes de
     considerar una cadena; compartir IP, usuario o equipo no basta.
     No incrementes ni reduzcas la severidad del ticket por coincidencias de grupo.
     Conserva un ticket N1 individual (solo el alert_id investigado);
     si confirmas una cadena, recomienda escalado a N2.
 """,
-        tools=[buscar_logs, consultar_activo, consultar_inteligencia, consultar_cambios, consultar_usuario],
+        tools=[buscar_logs, consultar_activo, consultar_inteligencia, consultar_sandbox, consultar_cambios, consultar_usuario],
         output_type=Ticket,
     )
+    contexto_vpn = contexto_vpn_verificado(alerta, desde, hasta)
+    if contexto_vpn:
+        print('[VPN] Sesiones y destinos contrastados desde la API SOC.', flush=True)
     entrada = {
         "alerta": alerta,
         "contexto_correlacion_preliminar": contexto,
+        "contexto_vpn_verificado_de_api": contexto_vpn,
         "ventana_utc_inicio": desde,
         "ventana_utc_fin": hasta,
         "objetivo": "Investigar y emitir un ticket justificado, SIN ejecutar contención",
@@ -277,7 +342,13 @@ INSTRUCCIONES:
     ticket = resultado.final_output.model_dump()
     # El ticket N1 es individual. Un grupo solo puede consolidarse en N2.
     ticket["alert_ids"] = [alerta["alert_id"]]
+    ticket["ticket_id"] = f"SOC-{alerta['alert_id']}"  # Identificador estable y único por alerta.
     ticket = normalizar_veredicto(ticket, alerta["alert_id"])
+    print("[VERIFICACIÓN] Contrastando las evidencias y aplicando la matriz SOC...", flush=True)
+    verificacion = verificar_evidencias(ticket, alerta, get)
+    ticket = aplicar_controles_n1(ticket, alerta, get, verificacion)
+    print(f"[VERIFICACIÓN] {len(verificacion['event_ids_confirmados'])} eventos corroborados;"
+          f" {len(verificacion['citas_sin_confirmar'])} referencias pendientes.", flush=True)
     ticket["executed_actions"] = []
     ticket["triage_seconds"] = round(time.perf_counter() - t0, 2)
     schema = json.loads((ROOT / "01_contexto/ticket_salida.schema.json").read_text(encoding="utf-8"))

@@ -151,7 +151,12 @@ def firma_tickets(root: Path, alert_ids: list[str]):
 
 
 def ruta_log(root: Path, source: str):
-    nombre = ALIAS.get(source.lower(), source.lower())
+    fuente = str(source or '').strip().lower()
+    if re.fullmatch(r'edr-\d+', fuente):
+        fuente = 'edr'
+    elif re.fullmatch(r'fw-\d+', fuente):
+        fuente = 'firewall'
+    nombre = ALIAS.get(fuente, fuente)
     if nombre not in FUENTES:
         return None
     for ext in ('.jsonl','.csv'):

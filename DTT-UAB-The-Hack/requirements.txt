@@ -1,0 +1,9 @@
+# Paquetes necesarios para ejecutar API + agente Ornith + panel
+fastapi>=0.110
+uvicorn>=0.29
+requests>=2.31
+jsonschema>=4.20
+openai-agents>=0.2
+streamlit>=1.45
+# Solo necesario para TestClient en pruebas_politica_n1.py
+httpx>=0.27

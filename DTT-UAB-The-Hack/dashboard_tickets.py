@@ -6,7 +6,7 @@ Ejecutar desde DTT-UAB-The-Hack:
 Lee únicamente JSON locales de tickets/ y no ejecuta acciones de contención.
 
 py -3.10 -m pip install streamlit
-py -3.10 -m streamlit run .\dashboard_tickets.pyclear
+py -3.10 -m streamlit run .\dashboard_tickets.py
 """
 
 from __future__ import annotations

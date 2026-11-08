@@ -1,0 +1,150 @@
+{
+  "ticket_id": "SOC-2026-1011-011877",
+  "alert_ids": [
+    "ALR-20261011-011877"
+  ],
+  "title": "Acceso VPN de proveedor (ext.logisoft) fuera de ventana contractual y desde origen externo nuevo no autorizado",
+  "verdict": "true_positive",
+  "confidence": 0.9,
+  "severity": "medium",
+  "severity_rationale": "Matriz: regla 'low' × activo más crítico 'Alta' (WMS01) = 'low'. Ajuste +1 por acceso confirmado (conexión VPN aceptada + RDP a WMS01 permitido + transferencia de datos; no es solo intento). Sin ajuste por identidad (cuenta externa, no privilegiada, no VIP). Sin ajuste por datos personales/pagos (dato operacional de almacén). Sin ajuste −1 (ningun control bloqueó el acceso: VPN connect OK, RDP allow). Máximo un ajuste permitido → severidad final = medium.",
+  "affected": {
+    "users": [
+      "ext.logisoft@tarvia.example (EXT001, cuenta de proveedor WMS, externa/no privilegiada/no VIP, ventana L-V 8-18h)"
+    ],
+    "hosts": [
+      "WMS01 (A01177, 10.40.2.10, criticality Alta, zona LOGISTICS-IT, servicio: Gestión de almacén (WMS))"
+    ],
+    "business_services": [
+      "Gestión de almacén (WMS)"
+    ],
+    "customers": [
+      "Federico, Logística (responsable de servicio WMS01)"
+    ]
+  },
+  "summary": "La cuenta de proveedor ext.logisoft (WMS) inició sesión VPN el domingo 2026-10-11 a las 01:38 UTC (03:38 hora local), fuera de su ventana contractual (L-V 8-18 h) y desde un ASN/ip completamente nuevo no visto en su historial (77.90.185.20, Vilna/Lt, AS213790 'Limited Network LTD', infraestructura de hosting). La sesión se conectó, estableció RDP contra WMS01 (alto criticidad) y transfirió datos (55 MB en total vs ~27 MB habituales; 9 MB en la sesión RDP). Dispositivo de origen desconocido (device_id vacío) y no conforme (device_compliant=false), con inconsistencia de geolocalización intra-sesión (connect desde LT, disconnect desde BG). No existe autorización: sin NOTIF de viaje/baja (hr_events vacío) y sin cambio autorizado que cubra esta fecha/origen. El cambio CHG-2026-1071 está aprobado pero es del 2026-10-16 y desde 'su IP corporativa', por lo que NO autoriza este evento del 11-O. El IP es desconocido en el TIP (null): no es 'limpio' por defecto. La combinación de (a) fuera de ventana, (b) origen externo/hosting no visto, (c) dispositivo conocido/nulo y no conforme, (d) inconsistencia geo intra-sesión y (e) sin autorización, describe una cuenta de proveedor comprometida/abusada; MFA aprovado no prueba legitimidad.",
+  "evidence": [
+    {
+      "source": "vpn",
+      "event_id": "VPN-0010704",
+      "finding": "2026-10-11T01:38:00Z, ext.logisoft desde 77.90.185.20 (LT/Vilna), assigned_ip 10.99.60.10, action=connect, mfa_result=approved (TOTP). Origen nuevo no visto en historial."
+    },
+    {
+      "source": "vpn",
+      "event_id": "VPN-0010705",
+      "finding": "2026-10-11T04:48:00Z, disconnect de la misma sesión (10.99.60.10) con country=BG (inconsistencia geográfica intra-sesión: connect LT / disconnect BG) y 55.000.000 bytes (~55 MB, casi el doble de una sesión habitual)."
+    },
+    {
+      "source": "idp_signins",
+      "event_id": "SIGN-0084059",
+      "finding": "2026-10-11T01:38:00Z, login VPN success desde 77.90.185.20; device_id='' (vacío, dispositivo de origen desconocido), device_compliant=false, conditional_access=notApplied; user_agent FortiClient/7.2; mfa approved."
+    },
+    {
+      "source": "firewall",
+      "event_id": "FW-0026536",
+      "finding": "2026-10-11T01:39:00Z, RDP TCP 10.99.60.10:50658 → 10.40.2.10:3389 (WMS01), action=allow, rule=VPN-EXT-LOGISOFT, 9.000.000 bytes. Acceso confirmado al activo de criticity Alta."
+    },
+    {
+      "source": "vpn",
+      "event_id": "VPN-0001401",
+      "finding": "2026-10-07T09:18:42Z, baseline legítimo: ext.logisoft desde 198.18.240.10 (ES), connect, approved TOTP."
+    },
+    {
+      "source": "vpn",
+      "event_id": "VPN-0001402",
+      "finding": "2026-10-07T11:10:42Z, disconnect desde 198.18.240.10 (ES), 27 MB (transferencia habitual)."
+    },
+    {
+      "source": "vpn",
+      "event_id": "VPN-0002415",
+      "finding": "2026-10-09T16:06:00Z, baseline legítimo: ext.logisoft desde 198.18.240.10 (ES), connect, approved TOTP."
+    },
+    {
+      "source": "inteligencia_tip",
+      "event_id": "ind_77.90.185.20",
+      "finding": "IP 77.90.185.20 = LT/Vilna, AS213790 'Limited Network LTD', is_hosting=True, is_tor=False, is_vpn_provider=False, tip=null (desconocido; NO se considera limpio)."
+    },
+    {
+      "source": "db_activo",
+      "event_id": "A01177",
+      "finding": "WMS01 (10.40.2.10), criticality Alta, zona LOGISTICS-IT, servicio 'Gestión de almacén (WMS)', internet_facing=False, EDR instalado."
+    },
+    {
+      "source": "db_usuario",
+      "event_id": "EXT001",
+      "finding": "ext.logisoft@tarvia.example, cuenta externa (account_type=external, privileged=False, vip=False), mfa=totp, estado=active, ventana contractual L-V 8-18h, origen habitual oficinas Madrid, hr_events=[] (sin viaje/baja notificado)."
+    },
+    {
+      "source": "cambios_aprobados",
+      "event_id": "CHG-2026-1071",
+      "finding": "Cambio aprobado para ext.logisoft sobre WMS01, PERO del 2026-10-16 21:00–23:59 y 'desde su IP corporativa'. NO cubre el evento del 2026-10-11: fecha distinta y origen distinto (hosting Lt vs IP corporativa)."
+    }
+  ],
+  "enrichment": [
+    {
+      "indicator": "77.90.185.20",
+      "type": "ip",
+      "source": "geoip/tip",
+      "result": "Lt/Vilna, AS213790 Limited Network LTD, infraestructura de hosting; TIP=null (desconocido)."
+    },
+    {
+      "indicator": "ext.logisoft",
+      "type": "user",
+      "source": "dir",
+      "result": "proveedor WMS, cuenta externa, no privilegiada, no VIP; ventana L-V 8-18h; sin NOTIF de viaje en eventos_rrhh."
+    },
+    {
+      "indicator": "WMS01",
+      "type": "host",
+      "source": "cmdb",
+      "result": "Servidor de aplicaciones Windows Server 2019, criticity Alta, servicio WMS."
+    },
+    {
+      "indicator": "CHG-2026-1071",
+      "type": "change",
+      "source": "cambios",
+      "result": "Autorizado pero para 2026-10-16 (no 11-O) y desde IP corporativa (no el origen de hosting Lt de este evento)."
+    }
+  ],
+  "mitre": [
+    "T1133 (External Remote Services, acceso inicial vía VPN abusada)"
+  ],
+  "recommended_actions": [
+    {
+      "action": "Bloquear el IOC 77.90.185.20 en proxy/correo/EDR y en el perímetro de salida (propuesto; el N1 puede ejecutar bloqueos de IOC externos hostiles que no son servicios dual-use como mega.nz/AnyDesk).",
+      "target": "77.90.185.20",
+      "requires_approval": false,
+      "justification": "Origen externo de hosting en Lt, no visto previamente y usado en evento no autorizado; no afecta servicios legítimos."
+    },
+    {
+      "action": "Proponer a N2: revocar la sesión de la cuenta ext.logisoft (VPN-0010704/SIGN-0084059, sesión 10.99.60.10) y rotar/bloquear el secreto TOTP + cambio de credencial (propuesto; requiere N2; una cuenta de servicio puede afectar el soporte WMS01, planificar en ventana fuera de horas de negocio).",
+      "target": "ext.logisoft (EXT001)",
+      "requires_approval": true,
+      "justification": "Indicios fuertes de cuenta comprometida; no ejecutar sin aprobación N2 por impacto en WMS."
+    },
+    {
+      "action": "Investigar mediante EDR la actividad interna de la sesión en WMS01 (RDP permitido, 9 MB) para detectar staging/exfiltración de datos o movimiento lateral adicional; revisar idp_audit de la cuenta (en esta ventana no se registraron eventos de regla de buzón/OAuth/MFA nuevo, pero no se puede probar la ausencia).",
+      "target": "WMS01 (10.40.2.10)",
+      "requires_approval": false,
+      "justification": "Confirmar si hubo efecto más allá del acceso."
+    },
+    {
+      "action": "Escalar a N2 para investigación completa (aunque la severidad matricial quede en medium: un solo ajuste permitido). Los indicadores de compromiso (origen externo/hosting no visto, dispositivo conocido/nulo y no conforme, inconsistencia geo intra-sesión, acceso confirmado a activo de criticity Alta y sin autorización) justifican atención prioritaria pese a no disparar un escalado obligatorio estricto.",
+      "target": "N2 de guardia",
+      "requires_approval": true,
+      "justification": "Juicio profesional por cadena de indicadores de compromiso de cuenta de proveedor."
+    }
+  ],
+  "escalation": {
+    "escalate": true,
+    "to": "N2",
+    "reason": "No se cumple de forma estricta el gatillo obligatorio de sección 5 (verdict true_positive de severidad media, no alta/crítica; sin ejecución/persistencia/robo de credenciales confirmado en logs; sin PII/fraude económico; una sola alerta). Sin embargo, se escala por criterio profesional: múltiples indicadores de compromiso de una cuenta de proveedor (origen externo/hosting no visto, dispositivo no conforme, inconsistencia geográfica intra-sesión y acceso confirmado a WMS01 de criticity Alta) y sin autorización, lo que sugiere compromiso real y posible exfiltración a investigar."
+  },
+  "open_questions": [
+    "¿Genera idp_audit la cuenta de proveedor? La ausencia de eventos de persistencia (reglas de buzón/OAuth/MFA nuevo) no prueba ausencia de persistencia; confirmar disponibilidad de esa fuente.",
+    "¿Qué datos se exfiltraron por la sesión RDP a WMS01 (9 MB) y los 55 MB totales? Revisar EDR/WMS01 y actividad posterior de la cuenta.",
+    "¿Se dispone de NOTIF de viaje/baja fuera del intervalo consultado que autorice el 11-O? (hr_events quedó vacío en el intervalo investigado)."
+  ],
+  "executed_actions": [],
+  "triage_seconds": 199.37
+}

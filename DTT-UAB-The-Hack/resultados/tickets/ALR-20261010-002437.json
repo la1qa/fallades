@@ -1,0 +1,98 @@
+{
+  "ticket_id": "SOC-20261010-002437",
+  "alert_ids": [
+    "ALR-20261010-002437"
+  ],
+  "title": "Investigación de posible prompt injection en el asistente de compra (Vela) - RB-07",
+  "verdict": "needs_more_info",
+  "confidence": 0.4,
+  "severity": "medium",
+  "severity_rationale": "La regla UC-AI-001 tiene severidad base medium. Según la matriz, sin poder determinar criticidad del activo/identidad ni si hubo ejecución o fuga confirmada, la severidad queda en medium mientras se recopilan evidencias. No aplica ajuste por +1 (no hay ejecución/fuga confirmada) ni -1 (no hay control confirmado que bloquee sin efecto), porque el guardrail solo marcó como 'flagged' pero falta confirmar si el modelo filtró datos en el response.",
+  "affected": {
+    "users": [
+      "cliente C708302"
+    ],
+    "hosts": [],
+    "business_services": [
+      "Asistente de compra Vela"
+    ],
+    "customers": [
+      "C708302"
+    ]
+  },
+  "summary": "Alerta de AI_GATEWAY (UC-AI-001, MITRE ATLAS AML.T0051) sobre un posible prompt injection detectado por el guardarraíl, que solo MARCO (flagged, no bloqueó) el prompt del cliente C708302 desde la IP 198.18.70.158. El fragmento del prompt mostrado ('Actúa como un estilista y qué combina con un pantalón beige') parece una consulta normal de moda, pero el guardarraíl lo marcó como prompt_injection. Falta leer la sesión completa para distinguir entre (a) un cliente corrigiéndose / consulta benigna y (b) un intento real de manipulación con posible fuga de datos.",
+  "evidence": [
+    {
+      "source": "ai_gateway",
+      "event_id": "AIG-0001882",
+      "finding": "Related_event de la alerta que contiene el evento del guardarraíl. Se requiere leer la sesión completa (same session_id) para evaluar prompt completo, acciones de herramientas y respuestas del modelo (runbook RB-07, comprobación 1 y 3). Estado: pendiente de recuperación."
+    },
+    {
+      "source": "tip_intelligence",
+      "event_id": "consulta_indicador_198.18.70.158",
+      "finding": "IP de origen del cliente 198.18.70.158. Requiere consulta al TIP/GeoIP para determinar si es conocido, reputation y si aparece en otras sesiones."
+    },
+    {
+      "source": "tip_intelligence",
+      "event_id": "consulta_indicador_C708302",
+      "finding": "Customer_id C708302. Requiere determinar si el cliente aparece en otras sesiones desde la misma IP o si es entidad legítima."
+    }
+  ],
+  "enrichment": [
+    {
+      "indicator": "198.18.70.158",
+      "type": "ip",
+      "source": "TIP/GeoIP interno",
+      "result": "PENDIENTE de consulta"
+    },
+    {
+      "indicator": "C708302",
+      "type": "customer",
+      "source": "TIP/GeoIP interno",
+      "result": "PENDIENTE de consulta"
+    }
+  ],
+  "mitre": [
+    "AML.T0051 - LLM Prompt Injection"
+  ],
+  "recommended_actions": [
+    {
+      "action": "Recuperar la sesión completa del AI_gateway con el mismo session_id del evento AIG-0001882 para leer el prompt completo, la secuencia de mensajes, acciones de herramientas y respuestas del modelo.",
+      "target": "RB-07 comprobación 1 y 3",
+      "requires_approval": false,
+      "justification": "Determinar si hay manipulación real con intención vs cliente corrigiéndose."
+    },
+    {
+      "action": "Consultar TIP/GeoIP de la IP 198.18.70.158 y el customer_id C708302 para reputación y aparición en otras sesiones.",
+      "target": "RB-07 comprobación 4",
+      "requires_approval": false,
+      "justification": "Evaluar si es una amenaza conocida o una intrusión aislada."
+    },
+    {
+      "action": "Verificar si el guardarraíl bloqueó o solo marcó, y comprobar si hubo llamadas a herramientas con identificadores de otro cliente.",
+      "target": "RB-07 comprobación 2",
+      "requires_approval": false,
+      "justification": "La acción fue 'flagged' (no blocked); falta confirmar si hubo exfiltración real en la respuesta."
+    },
+    {
+      "action": "Recopilación de evidencias adicionales antes de emitir veredicto final. No aplicar contención automática hasta completar el triaje.",
+      "target": "Instrucción 16",
+      "requires_approval": false,
+      "justification": "El veredicto depende de datos faltantes (sesión y responses)."
+    }
+  ],
+  "escalation": {
+    "escalate": false,
+    "to": "N/A",
+    "reason": "Veredicto pending until_more_info; no se puede aplicar escalado obligatorio hasta confirmar ejecución/fuga. Si tras la recopilación hay duda, la severidad temporal ya es medium."
+  },
+  "open_questions": [
+    "¿Cuál es el prompt completo y la secuencia de la sesión (session_id) asociada a AIG-0001882? ¿Hay intención de manipulación o es un cliente corrigiéndose?",
+    "¿Qué devolvió el modelo? ¿Ocurrió una fuga de datos de clientes o información interna en algún mensaje (incluidos los que no dispararon alerta)?",
+    "¿El guardarraíl solo marcó (flagged) o bloqueó? ¿Hubo llamadas a herramientas con identificadores de otro cliente?",
+    "¿La IP 198.18.70.158 o el cliente C708302 aparecen en otras sesiones de la ventana ±24h?",
+    "¿Cuál es la criticidad del frontal web WEB-ECOM asociado (WEB-ECOM01..04), de existir actividad dirigida a frontales?"
+  ],
+  "executed_actions": [],
+  "triage_seconds": 17.96
+}

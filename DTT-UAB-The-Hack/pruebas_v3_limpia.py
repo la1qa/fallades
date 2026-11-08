@@ -154,8 +154,18 @@ class V3Tests(unittest.TestCase):
                 assert data['alerta']['alert_id']=='ALR-1'
                 return types.SimpleNamespace(final_output=types.SimpleNamespace(model_dump=lambda:dict(ejemplo)))
         fake.Runner=FakeRunner
-        alerta={'alert_id':'ALR-1','runbook':'RB-02','created_at':'2026-10-10T00:00:00Z'}
+        alerta={'alert_id':'ALR-1','runbook':'RB-02',
+                'severity':'critical',
+                'source_product':'EDR',
+                'rule_id':'UC-EDR-001',
+                'entities':{'hosts':[],'users':[]},
+                'created_at':'2026-10-10T00:00:00Z'}
+        def get_local(path, **params):
+            if path == '/logs/edr_events':
+                return {'items':[{'event_id':'EDR-02'}], 'count':1}
+            return {'not_found': True}
         with patch.dict(sys.modules,{'agents':fake}), patch.object(v3,'ROOT',self.root),\
+             patch.object(v3,'get',get_local),\
              patch.dict(os.environ,{'LLM_PROVIDER':'dcc','DCC_API_KEY':'test_only_not_real'}),\
              contextlib.redirect_stdout(io.StringIO()):
             v3.agente_main(alerta)

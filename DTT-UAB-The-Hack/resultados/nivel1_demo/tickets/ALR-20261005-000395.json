@@ -1,0 +1,131 @@
+{
+  "ticket_id": "TKT-20261005-000395",
+  "alert_ids": [
+    "ALR-20261005-000395"
+  ],
+  "title": "ALR-20261005-000395 — PowerShell con comando codificado (UC-EDR-002) en WS-BCN-1993",
+  "verdict": "benign_true_positive",
+  "confidence": 0.97,
+  "severity": "low",
+  "severity_rationale": "Regla UC-EDR-002 (medium) × activo más crítico WS-BCN-1993 (Media) = base **medium** en la matriz del apartado 2. La actividad está asociada a un cambio aprobado (CHG-2026-1031) y a un flujo autorizado (cuenta de servicio svc_sccm + agente CcmExec), por lo que conforme al apartado 2 la severidad se fija en **informational o low**. Se aplica un único ajuste (−1) → **low**. No aplica ningún +1 (sin datos personales/pagos, sin interacción de VIP, sin ejecución maliciosa confirmada).",
+  "affected": {
+    "users": [
+      "NT AUTHORITY\\SYSTEM",
+      "svc_sccm@tarvia.example"
+    ],
+    "hosts": [
+      "WS-BCN-1993"
+    ],
+    "business_services": [
+      "Puesto de trabajo"
+    ],
+    "customers": []
+  },
+  "summary": "La regla UC-EDR-002 dispara por la ejecución de powershell.exe con -EncodedCommand en WS-BCN-1993 (event_id EDR-0005357). El proceso fue iniciado por CcmExec.exe (agente SCCM) como NT AUTHORITY\\SYSTEM. El comando descifrado es un script de inventario de software legítimo: `Get-CimInstance Win32_Product | Select Name,Version | ConvertTo-Json | Out-File C:\\Windows\\CCM\\Inventory\\sw.json`. Está cubierto por el cambio aprobado CHG-2026-1031 (\"Script de inventario de software vía SCCM\", svc_sccm -EncodedCommand diario 08:00-10:00, alcance 'Todos los puestos', 2026-09-28 a 2026-12-31). La misma tarea se ejecutó en paralelo en toda la flota de puestos de la HQ de Barcelona a la misma hora, sin actividad posterior maliciosa en el equipo. Veredicto: benign_true_positive.",
+  "evidence": [
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0005357",
+      "finding": "process_start de powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand (sha256 9a3171208537ad708648f69a6e2607af6738f804b99aef1709b309abf34773da), padre CcmExec.exe, user NT AUTHORITY\\SYSTEM, integrity System, signer Microsoft Windows. Command_line descifrado: `$inv = Get-CimInstance Win32_Product | Select Name,Version | ConvertTo-Json | Out-File C:\\Windows\\CCM\\Inventory\\sw.json`. timestamp 2026-10-05T06:02:00Z."
+    },
+    {
+      "source": "edr_events (related)",
+      "event_id": "ALR-20261005-000395",
+      "finding": "Alerta del SIEM asociada (regla UC-EDR-002, 'PowerShell con comando codificado'), severidad reportada medium, host WS-BCN-1993 (10.10.3.210), padre CcmExec.exe (agente SCCM), user SYSTEM."
+    },
+    {
+      "source": "consultar_activo",
+      "event_id": "asset A00993",
+      "finding": "WS-BCN-1993, portátil Windows 11 23H2, criticidad **Media**, zona HQ-USERS, servicio 'Puesto de trabajo', dueño david.sanz, no internet-facing. 1 vulnerabilidad abierta CVE-2025-49704 (Chrome 7.8, sin relación)."
+    },
+    {
+      "source": "consultar_cambios",
+      "event_id": "CHG-2026-1031",
+      "finding": "Cambio aprobado: 'Script de inventario de software vía SCCM (PowerShell codificado)', 2026-09-28 a 2026-12-31, solicitante Tecnología, detalle 'svc_sccm ejecuta -EncodedCommand diariamente 08:00-10:00', alcance 'Todos los puestos'. Autoriza exactamente la actividad detectada."
+    },
+    {
+      "source": "consultar_usuario",
+      "event_id": "svc_sccm",
+      "finding": "C cuenta de servicio, department Tecnología, title 'Cuenta de servicio', privileged True, mfa none, notes 'Ejecuta PowerShell codificado en endpoints como parte de la gestión.' — propósito documentado coincide con la tarea."
+    },
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0005261",
+      "finding": "Correlación de flota: WS-BCN-1542 ejecuta el mismo script -EncodedCommand (mismo sha256 9a317120...), padre CcmExec.exe, user SYSTEM, 2026-10-05T06:04:00Z."
+    },
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0005353 / EDR-0005285 / EDR-0005324",
+      "finding": "Correlación de flota: WS-BCN-1776, WS-BCN-1438, WS-LOG-1700 ejecutan idéntico script a 06:05-06:06Z (mismo patrón CcmExec→powershell -EncodedCommand, mismo hash)."
+    },
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0004885",
+      "finding": "Actividad posterior legítima en WS-BCN-1993 (mismo día): EXCEL.EXE /dde (07:14, david.sanz) — patrón de Office normal; sin ejecución secundaria maliciosa del inventario."
+    },
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0004886 / EDR-0004882 / EDR-0004884 / EDR-0004883",
+      "finding": "Actividad posterior legítima en WS-BCN-1993: chrome.exe (09:38), OUTLOOK.EXE (09:59), Acrobat.exe (14:14), ms-teams.exe (16:03) — todos los binarios firmados por su fabricante oficial (Google/Microsoft/Adobe), sin persistencia, LSASS ni movimiento lateral."
+    },
+    {
+      "source": "consultar_inteligencia",
+      "event_id": "TIP 9a317120...",
+      "finding": "TIP/GeoIP del hash de powershell.exe = null (CONOCIDO como 'desconocido', no 'limpio'). El binario es powershell.exe del sistema firmado por 'Microsoft Windows' en ruta C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\. La ausencia de marca negativa en un binario firmado del sistema es coherente; no es un IOI de malware."
+    }
+  ],
+  "enrichment": [
+    {
+      "indicator": "9a3171208537ad708648f69a6e2607af6738f804b99aef1709b309abf34773da",
+      "type": "hash",
+      "source": "TIP/GeoIP",
+      "result": "null (desconocido). Binario legítimo Windows-signed System32\\powershell.exe."
+    },
+    {
+      "indicator": "8169345f2ca68b435d79bba38100e3ace9d9e86ae98341bd29418bb8d940cc84",
+      "type": "hash",
+      "source": "TIP/GeoIP",
+      "result": "null (desconocido). CcmExec.exe legítimo firmado Microsoft Corporation en C:\\Windows\\CCM\\CcmExec.exe."
+    },
+    {
+      "indicator": "C:\\Windows\\CCM\\Inventory\\sw.json",
+      "type": "ruta",
+      "source": "log decoded",
+      "result": "Salida de inventario de software SCCM (ruta estándar del agente)."
+    }
+  ],
+  "mitre": [
+    "T1059.001 (PowerShell)"
+  ],
+  "recommended_actions": [
+    {
+      "action": "Cerrar la alerta ALR-20261005-000395 como benign_true_positive con severidad low (sin contención). Actividad autorizada por CHG-2026-1031.",
+      "target": "ticket",
+      "requires_approval": false,
+      "justification": "La detección es correcta pero la ejecución es el script de inventario de software oficial de SCCM, autorizado, lanzado por el agente CcmExec.exe como SYSTEM, en paralelo en toda la flota y sin actividad posterior maliciosa en el equipo."
+    },
+    {
+      "action": "Verificar que los demás equipos de la HQ de Barcelona (WS-BCN-1542, WS-BCN-1776, WS-BCN-1438, WS-LOG-1700, ...) reciben la misma tarea autorizada como benign_true_positive y no se abren tickets individuales no necesarios (agrupar en lote).",
+      "target": "flota SCCM",
+      "requires_approval": false,
+      "justification": "La misma tarea se observa en múltiples equipos; cada alerta similar puede agruparse/bloquearse como benign con referencia a CHG-2026-1031."
+    },
+    {
+      "action": "Confirmar que la tarea de inventario SCCM se dispara según el horario autorizado 08:00-10:00 local (06:02 UTC = 08:02 CEST, dentro de ventana) y que el proceso padre es realmente CcmExec.exe firmado — ya verificado.",
+      "target": "administración SCCM",
+      "requires_approval": false,
+      "justification": "Ratifica coherencia temporal y de firma del proceso padre."
+    }
+  ],
+  "escalation": {
+    "escalate": false,
+    "to": "ninguno",
+    "reason": "Veredicto benign_true_positive de severidad low. No cumple ningún criterio del apartado 5 (no es true_positive high/critical, no hay ejecución maliciosa confirmada, robo de credenciales, persistencia, salida de datos personales, fraude por IBAN ni acceso a OT). No requiere notificación ni escalar a N2."
+  },
+  "open_questions": [
+    "Limitación de búsqueda: el resultado de la búsqueda de eventos con CcmExec.exe fue 'NO EXHAUSTIVA' (truncada). No puedo confirmar exhaustivamente el número total de equipos que ejecutaron la tarea, aunque todos los casos observados coinciden exactamente con el patrón autorizado (mismo hash, mismo script, misma hora).",
+    "TIP de los hashes de powershell.exe y CcmExec.exe = null (desconocido); se confirma legitimidad por firma de Microsoft, no por reputación de red."
+  ],
+  "executed_actions": [],
+  "triage_seconds": 178.72
+}

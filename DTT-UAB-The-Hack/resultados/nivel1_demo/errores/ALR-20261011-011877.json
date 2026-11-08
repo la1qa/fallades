@@ -1,0 +1,7 @@
+{
+  "alert_id": "ALR-20261011-011877",
+  "error_type": "ValidationError",
+  "error": "'info' is not one of ['informational', 'low', 'medium', 'high', 'critical']\n\nFailed validating 'enum' in schema['properties']['severity']:\n    {'enum': ['informational', 'low', 'medium', 'high', 'critical']}\n\nOn instance['severity']:\n    'info'",
+  "cause_type": null,
+  "cause": null
+}

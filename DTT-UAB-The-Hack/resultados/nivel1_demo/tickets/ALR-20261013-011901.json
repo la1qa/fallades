@@ -1,0 +1,140 @@
+{
+  "ticket_id": "SOC-N1-20261013-CICD-001",
+  "alert_ids": [
+    "ALR-20261013-011901"
+  ],
+  "title": "Ataque a cadena de suministro (dependency confusion) en CI-RUNNER01 con fuga de credenciales AWS/NPM y despliegue en tienda online",
+  "verdict": "true_positive",
+  "confidence": 0.97,
+  "severity": "high",
+  "severity_rationale": "Regla UC-DEV-001 severidad base medium × activo más crítico afectado CI-RUNNER01 (criticidad Alta) = celda medium; +1 por ejecución confirmada del postinstall malicioso (secretos leídos, build desplegado en producción) + identidad privilegiada (svc_ecom_deploy, clave de despliegue AWS) + datos de pagos/clientes (checkout de la tienda online). Sin ajuste −1: el firewall PERMITIÓ la salida (AWS-CI-EGress allow), no hubo bloqueo previo. Capped a +1. Resultado: medium + 1 = high.",
+  "affected": {
+    "users": [],
+    "hosts": [
+      "CI-RUNNER01",
+      "ecom-frontend (build #1842, despliegue en tienda online)"
+    ],
+    "business_services": [
+      "Integración continua",
+      "Venta online (ecom-frontend)"
+    ],
+    "customers": [
+      "Datos de clientes/pagos implicados (módulo de checkout de la tienda online)"
+    ]
+  },
+  "summary": "Un build de CI/CD (ecom-frontend#1842, host CI-RUNNER01) descargó el paquete 'tarvia-checkout-utils@9.9.1' desde el registro npm PÚBLICO en vez de '@tarvia/checkout-utils' del registro interno: confusión de dependencias (T1195.002, TTP supply chain). El script postinstall de ese paquete leyó variables de entorno con secretos (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, NPM_TOKEN) y ejecutó un POST (HTTPS 443) a 'npm-telemetry-stats.example' (dominio desconocido, sin historial en TIP/GeoIP). El resultado del build fue 'OK (desplegado)' en la tienda online. No existe ningún cambio aprobado que autorice esta actividad. Se trata, pues, de un compromiso real de la cadena de suministro con robo de credenciales desplegadas en producción.",
+  "evidence": [
+    {
+      "source": "firewall",
+      "event_id": "FW-0026595",
+      "finding": "CI-RUNNER01 (172.16.10.21:41822) → 203.0.113.170:443, acción allow, regla AWS-CI-EGress, 2150 bytes, zone AWS-PROD → EXTERNAL, 2026-10-13T12:22:31Z. Corrobora la salida (exfil) HTTPS al dominio atacante indicado en la alerta."
+    },
+    {
+      "source": "alert_SIEM",
+      "event_id": "ALR-20261013-011901 (regla UC-DEV-001)",
+      "finding": "Dependence confusion: paquete 'tarvia-checkout-utils@9.9.1 (registro público)' vs '@tarvia/checkout-utils (registro interno)'. Secretos leídos: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, NPM_TOKEN. Red: POST a npm-telemetry-stats.example. build_result: OK (desplegado)."
+    },
+    {
+      "source": "CI_pipeline_audit",
+      "event_id": "CI-0000601/CI-0000602/CI-0000603",
+      "finding": "Eventos internos del pipeline (instalación del paquete, lectura de secretos y conexión saliente) declarados en la alerta. NO recuperables en las fuentes de logs SOC consultadas; limitación de búsqueda (detalles abajo)."
+    },
+    {
+      "source": "CMDB",
+      "event_id": "activo A01175 (CI-RUNNER01)",
+      "finding": "Runner CI/CD, OS Amazon Linux 2023, criticality Alta, zone AWS-PROD, 'Ejecuta los builds de la tienda online. Tiene en variables de entorno la clave de despliegue de AWS (svc_ecom_deploy).' Sin vulnerabilidades registradas."
+    },
+    {
+      "source": "inteligencia_indicadores",
+      "event_id": "consultas TIP/GeoIP",
+      "finding": "npm-telemetry-stats.example → TIP null, GeoIP null (desconocido/sin historial). 203.0.113.170 → TIP null, GEO NL, AS64615 Hosting (is_hosting true) — hosting externo no confiable. tarvia-checkout-utils-9.9.1.tgz (sha256 f412c70fef24e226c48b62c885087042fb88ddae0df4f4d5386f4b48156a676c) → TIP null (desconocido)."
+    },
+    {
+      "source": "consultas_cambios",
+      "event_id": "consultar_cambios (ecom-frontend, CI-RUNNER01, build 1842)",
+      "finding": "Respuesta vacía (sin cambios aprobados, pentests o actividades autorizadas). No hay autorización para la descarga/despliegue. Nota: las coincidencias de EDR con '1842' (WS-BCN-1842, parent_pid 1842, etc.) son ruido coincidente y no pertenecen a este build."
+    }
+  ],
+  "enrichment": [
+    {
+      "indicator": "npm-telemetry-stats.example",
+      "type": "domain",
+      "source": "TIP/GeoIP",
+      "result": "DESCONOCIDO (TIP null, GeoIP null). Dominio nuevo/inyectado, coherente con la TTP."
+    },
+    {
+      "indicator": "203.0.113.170",
+      "type": "ip",
+      "source": "GeoIP interno",
+      "result": "Hosting en NL, AS64615, is_hosting true. No VPN/TOR. Destino de la salida saliente (FW-0026595)."
+    },
+    {
+      "indicator": "sha256 f412c70fef24e226c48b62c885087042fb88ddae0df4f4d5386f4b48156a676c",
+      "type": "file",
+      "source": "TIP",
+      "result": "DESCONOCIDO (TIP null)."
+    },
+    {
+      "indicator": "svc_ecom_deploy",
+      "type": "credential",
+      "source": "directorio",
+      "result": "Cuenta de servicio no registrada como usuario (no_found). Contiene la clave de despliegue AWS del entorno de ecom-frontend."
+    }
+  ],
+  "mitre": [
+    "T1195.002 (Compromise Software Supply Chain)",
+    "T1552.001 (Credentials in Environment - Cloud Services)",
+    "T1041 (Exfiltration Over C2 Channel / HTTPS)",
+    "T1505.003 (Web Shell? no) -> prefer: T1195 supply chain persistencia en build"
+  ],
+  "recommended_actions": [
+    {
+      "action": "ROTAR INMEDIATAMENTE todas las credenciales del entorno del build ecom-frontend#1842: la clave de despliegue AWS svc_ecom_deploy (AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY), el token npm y cualquier otro secreto presente en ese build.",
+      "target": "N2 / Dueño del servicio",
+      "requires_approval": true,
+      "justification": "Robo de credenciales confirmado por exfil; es la contención prioritaria."
+    },
+    {
+      "action": "BLOQUEAR los IOCs npm-telemetry-stats.example y 203.0.113.170 (443) en proxy, firewall y EDR. No es servicio dual legítimo; N1 puede ejecutar el bloqueo.",
+      "target": "N1",
+      "requires_approval": false,
+      "justification": "IOC confirmado como salida a hosting externo; coherente con la exfil."
+    },
+    {
+      "action": "PROPONER el aislamiento del servidor CI-RUNNER01 de AWS-PROD (requiere N2 + dueño del servicio) hasta la remediación.",
+      "target": "N2",
+      "requires_approval": true,
+      "justification": "Servidor comprometido con claves de despliegue."
+    },
+    {
+      "action": "Revisar cloudtrail / logs de despliegue para detectar uso posterior de las claves AWS tras 2026-10-13T12:22:31Z (post-exfil). No ejecutar; proponer a N2.",
+      "target": "N2",
+      "requires_approval": true,
+      "justification": "Confirmar si las claves se reutilizaron tras la exfiltración."
+    },
+    {
+      "action": "Verificar el estado de los frontales/product de ecom-frontend afectados por el build #1842 y rollback de esa versión; confirmar el despliegue reportado en logs de CI/CD de producción.",
+      "target": "N2",
+      "requires_approval": true,
+      "justification": "Confirmar compromiso real de la tienda online (datos de clientes/pagos)."
+    },
+    {
+      "action": "Reportar el paquete malicioso tarvia-checkout-utils@9.9.1 al proveedor npm / equipo de seguridad y revisar el pipeline para forzar el scope @tarvia/ (evitar confusion).",
+      "target": "N2 / DevSecOps",
+      "requires_approval": false,
+      "justification": "Contención de la causa raíz (dependency confusion)."
+    }
+  ],
+  "escalation": {
+    "escalate": true,
+    "to": "N2 de guardia",
+    "reason": "Veredicto true_positive severidad high. Criterios de escalado obligatorio cumplidos: (1) robo de credenciales (claves AWS de despliegue svc_ecom_deploy + NPM_TOKEN exfiltradas a hosting externo); (2) ejecución confirmada de código malicioso (postinstall corrompido + build desplegado en la tienda online); (3) posibles datos personales de clientes/pagos implicados (módulo de checkout). Notificar al responsable SOC; notificar a DPO si se confirma salida de datos de clientes. SLA high = triaje en 30 min, escalado a N2 en la misma jornada, notificar al responsable SOC y CISO (doble, dado compromiso de credenciales de producción). Si se confirma por evidencia independiente el compromiso de los frontales/product de la tienda online, reevaluar a severidad critical."
+  },
+  "open_questions": [
+    "Confirmar en logs de CI/CD de producción el despliegue del build #1842 y qué recursos (frontales WEB-ECOM) quedaron afectados.",
+    "Determinar si las claves AWS fueron reutilizadas tras la exfiltración (cloudtrail / deploy logs).",
+    "Recuperar los eventos CI-0000601/602/603 desde la fuente de auditoría del pipeline (fuera de las fuentes de logs SOC consultadas)."
+  ],
+  "executed_actions": [],
+  "triage_seconds": 145.85
+}

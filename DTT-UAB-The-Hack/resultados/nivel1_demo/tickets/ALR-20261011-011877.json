@@ -1,0 +1,122 @@
+{
+  "ticket_id": "TKT-20261011-011877",
+  "alert_ids": [
+    "ALR-20261011-011877"
+  ],
+  "title": "Acceso VPN de proveedor ext.logisoft desde infraestructura extranjera no habitual, fuera de ventana contractual, con descarga de ~55 MB (posible compromiso de cuenta)",
+  "verdict": "true_positive",
+  "confidence": 0.9,
+  "severity": "medium",
+  "severity_rationale": "Regla UC-VPN-001 = low; activo más crítico afectado = WMS01 (criticidad Alta). Cruce de matriz 'low' × 'Alta' = low. Se aplica un +1 por acceso confirmado (conexión VPN + RDP permitido a WMS01 + transferencia de ~55 MB), sin control que lo bloqueara antes de producir efecto → medium. No se aplica -1 (el acceso no fue bloqueado). Máximo un ajuste (solo este +1).",
+  "affected": {
+    "users": [
+      "ext.logisoft@tarvia.example (EXT001, cuenta de proveedor externo, no privilegiada, no VIP)"
+    ],
+    "hosts": [
+      "WMS01 (10.40.2.10, criticidad Alta, LOGISTICS-IT, servicio 'Gestión de almacén (WMS)')"
+    ],
+    "business_services": [
+      "Gestión de almacén (WMS)"
+    ],
+    "customers": [
+      "—"
+    ]
+  },
+  "summary": "La cuenta de proveedor ext.logisoft se conectó por VPN un domingo 2026-10-11 a las 01:38 UTC (03:38 local) —fuera de su ventana contractual (L-V 8-18 h)— desde la IP 77.90.185.20, un ASN de hosting en Letonia (AS213790 'Limited Network LTD'), que no coincide con su origen habitual (oficinas de Logisoft en Madrid, AS64650). MFA TOTP aprobado. La sesión estableció RDP contra WMS01 (permitido) y descargó ~55 MB; el disconnect registra un país distinto (BG, Bulgaria) respecto del connect (LT), lo que sugiriría salto/comparte de sesión. No existe cambio autorizado que cubra este acceso.",
+  "evidence": [
+    {
+      "source": "vpn",
+      "event_id": "VPN-0010704",
+      "finding": "connect de ext.logisoft desde 77.90.185.20 (IP asignada 10.99.60.10), país LT, 2026-10-11T01:38:00Z, mfa_result 'approved (TOTP)'."
+    },
+    {
+      "source": "vpn",
+      "event_id": "VPN-0010705",
+      "finding": "disconnect del mismo usuario/IP, 2026-10-11T04:48:00Z, país BG (diferente del connect LT), bytes 55000000 (~55 MB descargados)."
+    },
+    {
+      "source": "firewall",
+      "event_id": "FW-0026536",
+      "finding": "RDP desde 10.99.60.10:50658 a 10.40.2.10:3389 (WMS01), action 'allow', regla 'VPN-EXT-LOGISOFT', zona LOGISTICS-IT, bytes 9000000, 2026-10-11T01:39:00Z."
+    },
+    {
+      "source": "tip/geoip",
+      "event_id": "consulta_indicador_77.90.185.20",
+      "finding": "77.90.185.20 = Vilna, Letonia (LT); AS213790 'Limited Network LTD'; is_hosting=True; is_vpn_provider=False; is_tor=False; is_residential_proxy=False; tip=reputación nula (DESCONOCIDO, no 'limpio')."
+    },
+    {
+      "source": "cmdb",
+      "event_id": "consultar_activo_10.40.2.10",
+      "finding": "WMS01, criticidad 'Alta', tipo 'Servidor de aplicaciones', LOGISTICS-IT, WMS, EDR instalado."
+    },
+    {
+      "source": "directorio",
+      "event_id": "consultar_usuario_ext.logisoft",
+      "finding": "Cuenta de proveedor externo, no privilegiada, no VIP, MFA TOTP, ventana contractual L-V 8-18 h, acceso solo WMS01 por RDP, origen habitual Madrid. hr_events=[] (sin viajes/bajas)."
+    },
+    {
+      "source": "cambios_autorizados",
+      "event_id": "CHG-2026-1071",
+      "finding": "Único flujo autorizado encontrado: acceso de ext.logisoft el 2026-10-16 21:00-23:59 (no el 2026-10-11), y describe 'desde su IP corporativa' (no un hosting en Letonia). No cubre la alerta."
+    },
+    {
+      "source": "idp_audit",
+      "event_id": "sin_registros_en_ventana",
+      "finding": "Búsqueda de post-actividad de sesión de ext.logisoft en idp_audit dentro de la ventana → 0 resultados. No se pudo confirmar en detalle la actividad intra-sesión (limitación de búsqueda)."
+    }
+  ],
+  "enrichment": [
+    {
+      "indicator": "77.90.185.20",
+      "type": "ip",
+      "source": "tip/geoip",
+      "result": "Hosting en Letonia (AS213790 Limited Network LTD). Sin reputación en el TIP (DESCONOCIDO). No coincide con el ASN habitual del proveedor (AS64650, Logisoft Madrid)."
+    }
+  ],
+  "mitre": [
+    "T1133 - External Remote Services (Initial Access)"
+  ],
+  "recommended_actions": [
+    {
+      "action": "escalar_a_N2",
+      "target": "N2 de guardia",
+      "requires_approval": true,
+      "justification": "True_positive con fuertes indicadores de compromiso de cuenta de proveedor (origen en hosting extranjero no habitual, fuera de ventana contractual, egress inconsistente y descarga de ~55 MB) y acceso confirmado a un activo de criticidad Alta (WMS01)."
+    },
+    {
+      "action": "revocar_sesiones_y_reset_credenciales",
+      "target": "Cuenta ext.logisoft",
+      "requires_approval": true,
+      "justification": "Revocar todas las sesiones activas/inactivas y forzar cambio de contraseña. Requiere N2."
+    },
+    {
+      "action": "evaluar_deshabilitacion_cuenta",
+      "target": "Cuenta ext.logisoft",
+      "requires_approval": true,
+      "justification": "Evaluar deshabilitar la cuenta de proveedor, avisando del impacto en el soporte WMS. Requiere N2 + negocio."
+    },
+    {
+      "action": "bloquear_ioc",
+      "target": "77.90.185.20 (y red del ASN AS213790 Limited Network LTD)",
+      "requires_approval": false,
+      "justification": "Bloquear el IOC en proxy/firewall/EDR. Es una IP específica de infraestructura extranjera no legítima (no es servicio dual de uso compartido)."
+    },
+    {
+      "action": "investigacion_forensica_wms01",
+      "target": "WMS01",
+      "requires_approval": true,
+      "justification": "Revisar EDR y logs de WMS01 para determinar qué archivos/datos se accedieron o descargaron (~55 MB) durante la sesión y evaluar posible exfiltración."
+    }
+  ],
+  "escalation": {
+    "escalate": true,
+    "to": "N2",
+    "reason": "True_positive por compromiso sospechoso de cuenta de tercero con acceso confirmado a un activo de criticidad Alta (WMS01) y descarga de ~55 MB; el IOC es infraestructura extranjera no verificada. Contenciones requeridas (revocar sesiones, reset, evaluar deshabilitación) dependen de N2, que además puede decidir investigación forensica por la posible salida de datos."
+  },
+  "open_questions": [
+    "¿Qué datos concretos se descargaron en WMS01 durante la sesión? (idp_audit sin registros; revisar EDR/forensics)",
+    "¿El descargo de credenciales/proveedor ocurrió por una fuga previa? (para confirmar robo de credenciales)"
+  ],
+  "executed_actions": [],
+  "triage_seconds": 215.45
+}

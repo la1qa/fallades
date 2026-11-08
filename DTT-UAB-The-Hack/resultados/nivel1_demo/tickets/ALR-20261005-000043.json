@@ -1,0 +1,131 @@
+{
+  "ticket_id": "TKT-20261005-000043",
+  "alert_ids": [
+    "ALR-20261005-000043"
+  ],
+  "title": "UC-IDP-001 Viaje imposible — Javier Sanz: falso positivo por Private Relay del móvil",
+  "verdict": "false_positive",
+  "confidence": 0.88,
+  "severity": "low",
+  "severity_rationale": "Regla = medium; identidad más crítica = Javier Sanz (cuenta user, no privilegiada, no VIP, Marketing CRM) → criticidad Baja. Cruce matriz Regla×Activo (medium×Baja)=low. No aplica ningún ajuste ±1: ningún control bloqueó el evento (ambos inicios exitosos, no es caso de −1) y no hay identidad VIP/privilegiada ni datos de pagos/personales confirmados (no es caso de +1). Severidad final: low.",
+  "affected": {
+    "users": [
+      "javier.sanz@tarvia.example"
+    ],
+    "hosts": [],
+    "business_services": [],
+    "customers": []
+  },
+  "summary": "La regla UC-IDP-001 ('Viaje imposible') dispara por dos inicios de sesión exitosos separados por ~5 min (06:30 y 06:35 UTC del 2026-10-05) entre Barcelona (198.18.200.10) y Dublín (198.18.10.185). La evidencia demuestra que la aparente imposibilidad geográfica es un artefacto del Private Relay del móvil corporativo de Javier Sanz: la segunda IP (198.18.10.185) es un nodo de salida de Private Relay/VPN móvil (AS8075, is_hosting=true en el TIP/GeoIP, descrito explícitamente como 'salida de Private Relay/VPN del móvil, simulado'), no una ubicación física real en Irlanda. Todos los inicios usan MFA TOTP satisfactorio, desde dispositivos corporativos conocidos y conformes, y el patrón de trabajo real del usuario desde Barcelona se mantiene intacto (07:29–07:38 UTC). No hay robo de credenciales, persistencia ni actividad maliciosa posterior. Veredicto: false_positive.",
+  "evidence": [
+    {
+      "source": "idp_signins",
+      "event_id": "SIGN-0003549",
+      "finding": "06:30:52Z, Microsoft Teams, result=success, src_ip=198.18.200.10 (ES/Barcelona, AS64610 → Orange España), user_agent Windows/Edge (escritorio corporativo), device_id=dev-54e5c389 (device_compliant=true), mfa=totp satisfied_by_session, risk_level=none, conditional_access=success."
+    },
+    {
+      "source": "idp_signins",
+      "event_id": "SIGN-0003550",
+      "finding": "06:35:52Z, Office 365 Exchange Online, result=success, src_ip=198.18.10.185 (IE/Dublín, AS8075), user_agent iOS Outlook-iOS (móvil), device_id=mob-28a90bad (device_compliant=true), mfa=totp satisfied_by_session, risk_level=low, conditional_access=success. IP 198.18.10.185 confirmada como nodo de salida de Private Relay/VPN móvil."
+    },
+    {
+      "source": "idp_signins",
+      "event_id": "SIGN-0000707",
+      "finding": "07:29:38Z, Portal del Empleado, result=success, src_ip=198.18.200.10 (ES/Barcelona), desktop dev-54e5c389, session=s-3d55c6c0e23b, MFA ok. Baseline normal de trabajo."
+    },
+    {
+      "source": "idp_signins",
+      "event_id": "SIGN-0000708",
+      "finding": "07:34:38Z, ERP Web, result=success, src_ip=198.18.200.10 (Barcelona), desktop dev-54e5c389, session=s-3d55c6c0e23b, MFA ok."
+    },
+    {
+      "source": "idp_signins",
+      "event_id": "SIGN-0000709",
+      "finding": "07:37:38Z, Office 365 Exchange Online, result=success, src_ip=198.18.200.10 (Barcelona), desktop dev-54e5c389, session=s-3d55c6c0e23b, MFA ok."
+    },
+    {
+      "source": "idp_signins",
+      "event_id": "SIGN-0000710",
+      "finding": "07:38:38Z, Microsoft Teams, result=success, src_ip=198.18.200.10 (Barcelona), desktop dev-54e5c389, session=s-3d55c6c0e23b, MFA ok."
+    },
+    {
+      "source": "consultar_inteligencia_GeoIP/TIP",
+      "event_id": "IP-198.18.10.185",
+      "finding": "TIP=null (sin marca maliciosa conocida). GeoIP: IE/Dublín, AS8075, as_org='Microsoft (salida de Private Relay/VPN del móvil, simulado)', is_hosting=true, is_tor=false, is_vpn_provider=false. La ubicación 'Dublín' es el punto de salida del relay, no la posición física."
+    },
+    {
+      "source": "consultar_inteligencia_GeoIP/TIP",
+      "event_id": "IP-198.18.200.10",
+      "finding": "TIP=null. GeoIP: ES/Madrid, AS12479 (Orange Espagne), is_tor=false, is_vpn_provider=false, is_hosting=false. ISP residencial/prop del usuario; coherente con su ubicación real en España."
+    },
+    {
+      "source": "consultar_usuario",
+      "event_id": "USUARIO-javier.sanz",
+      "finding": "U1214, Javier Sanz, departamento Marketing, puesto Especialista CRM, ubicación Barcelona HQ, account_type=user, privileged=false, vip=false, status=active. hr_events=[] (sin viajes/bajas notificados)."
+    },
+    {
+      "source": "consultar_cambios",
+      "event_id": "cambios-consulta",
+      "finding": "Sin cambios aprobados, pentests o actividades autorizadas asociados al usuario ni al Private Relay. (Private Relay es una función de móvil iOS, no requiere cambio autorizado)."
+    },
+    {
+      "source": "idp_audit",
+      "event_id": "idp_audit-limit",
+      "finding": "Busqueda por UPN y por SIGN-0003550 en la ventana devolvió count=0. No se pudo auditar el detalle post-sesión (reglas de buzón, consentimientos OAuth, nuevos métodos MFA). Limitación de búsqueda declarada; la línea de base de inicios (SIGN-0000707..710) ya muestra actividad normal y sin indicadores de persistencia."
+    }
+  ],
+  "enrichment": [
+    {
+      "indicator": "198.18.200.10",
+      "type": "ip",
+      "source": "GeoIP/TIP interno",
+      "result": "Orange España (AS12479); ISP del usuario; no Tor/VPN hosting. Sin marca maliciosa."
+    },
+    {
+      "indicator": "198.18.10.185",
+      "type": "ip",
+      "source": "GeoIP/TIP interno",
+      "result": "Nodo de salida de Private Relay/VPN móvil (AS8075); is_hosting=true; geolocalización 'Dublín' = punto de salida del relay, no ubicación física real. Sin marca maliciosa en el TIP."
+    }
+  ],
+  "mitre": [
+    "T1078 - Valid Accounts (aplicación de la regla)"
+  ],
+  "recommended_actions": [
+    {
+      "action": "Cerrar el ticket como false_positive; no ejecutar ninguna contención sobre la identidad ni los indicadores.",
+      "target": "user=javier.sanz@tarvia.example",
+      "requires_approval": false,
+      "justification": "No hay compromiso; la movilidad aparente es un artefacto del Private Relay."
+    },
+    {
+      "action": "NO bloquear la IP 198.18.10.185 en proxy/correo/EDR. Es un nodo de salida legítimo de Private Relay del propio móvil corporativo; bloquearlo cortaría el acceso móvil real del usuario (servicio dual, sin aprobación N2).",
+      "target": "ip=198.18.10.185",
+      "requires_approval": false,
+      "justification": "Bloquear servicios de uso dual sin N2 está prohibido."
+    },
+    {
+      "action": "Ajustar el rule UC-IDP-001 para filtrar/excluir nodos de salida de Private Relay/VPN conocidos (p. ej. AS8075 Private Relay) de la correlación de viaje imposible, reduciendo falsos positivos.",
+      "target": "regla=UC-IDP-001",
+      "requires_approval": false,
+      "justification": "Prevención de ruido futuro; no afecta a la detección de viajes reales."
+    },
+    {
+      "action": "Verificar periódicamente que el dispositivo móvil mob-28a90bad permanece conforme (actualmente device_compliant=true).",
+      "target": "device=mob-28a90bad",
+      "requires_approval": false,
+      "justification": "El dispositivo es el origen del falso positivo; conviene mantenerlo conforme."
+    }
+  ],
+  "escalation": {
+    "escalate": false,
+    "to": "none",
+    "reason": "Veredicto false_positive y severidad low. No se cumple ningún criterio de escalado obligatorio (apartado 5): no hay true_positive high/critical, ni ejecución de código/robo de credenciales/persistencia, ni salida de datos personales, ni fraude por IBAN, ni operaciones OT, ni cadena de varias alertas. El N1 puede cerrar el ticket dentro del SLA de low (24 h)."
+  },
+  "open_questions": [
+    "idp_audit no devolvió registros en la ventana; no se pudo confirmar el detalle post-sesión (reglas de buzón, consentimientos OAuth, MFA nuevo). Limitación de búsqueda reconocida; la evidencia de inicios es suficiente para el veredicto.",
+    "No se encontró notificación de viaje en HR, pero la ausencia no prueba viaje: la explicación real es el Private Relay, no un destino físico en Irlanda."
+  ],
+  "executed_actions": [],
+  "triage_seconds": 130.97
+}

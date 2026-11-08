@@ -1,0 +1,97 @@
+{
+  "ticket_id": "TKT-20261008-011833",
+  "alert_ids": [
+    "ALR-20261008-011833"
+  ],
+  "title": "SQLi contra /api/v1/products en www.tarvia.example — pentest autorizado (UC-WEB-001)",
+  "verdict": "benign_true_positive",
+  "confidence": 0.95,
+  "severity": "low",
+  "severity_rationale": "Regla UC-WEB-001 con severidad 'low' × activo WEB-ECOM01 de criticidad 'Crítica' = 'medium' según la matriz (apartado 2). Se aplica UN único ajuste de −1 por la política del apartado 3: la actividad está asociada a un cambio aprobado (CHG-2026-1042) y el WAF bloqueó el 100% de los intentos (control efectivo antes de producir efecto), por lo que el resultado es benign_true_positive con severidad 'low' (dentro del rango 'informational o low' permitido para flujos autorizados). No se aplica ningún segundo ajuste.",
+  "affected": {
+    "users": [],
+    "hosts": [
+      "WEB-ECOM01 (10.50.1.11)",
+      "WEB-ECOM01..04 (alcance del pentest)"
+    ],
+    "business_services": [
+      "Tienda online y app (≈38% de la facturación)"
+    ],
+    "customers": []
+  },
+  "summary": "La alerta UC-WEB-001 reporta 56 intentos de inyección SQL (?cat=12' OR '1'='1) contra https://www.tarvia.example/api/v1/products desde la IP 192.0.2.11. Todos los intentos fueron bloqueados por el WAF (HTTP 403, acción 'blocked'). El origen 192.0.2.11 está dentro del rango de IPs autorizado (192.0.2.10–12) para el pentest externo de la tienda online, cubierto por el cambio aprobado CHG-2026-1042 (2026-10-08 08:00 a 2026-10-10 18:00, hora local Madrid/CEST; eventos a las 06:56 UTC = 08:56 CEST, dentro de la ventana). El User-Agent de las peticiones es 'pentest-auditoria-tarvia'. No hay evidencia de éxito: ningún evento con respuesta 200/éxito, ninguna web shell ni acceso correcto posterior asociado a esta alerta.",
+  "evidence": [
+    {
+      "source": "waf",
+      "event_id": "WAF-0074548",
+      "finding": "GET /api/v1/products?cat=12' OR '1'='1 desde 192.0.2.11 (ES) → status 403, action 'blocked', regla 942100, User-Agent 'Mozilla/5.0 (compatible; pentest-auditoria-tarvia)', ts 2026-10-08T06:56:00Z."
+    },
+    {
+      "source": "waf",
+      "event_id": "WAF-0074549..WAF-0074584 (y más allá)",
+      "finding": "Patrón idéntico (misma URL, mismo payload SQLi, mismo User-Agent, mismo origen 192.0.2.11) en todos los eventos muestreados, todos status 403 / blocked. La alerta indica 56 hits; el recuento coincide. La búsqueda por '192.0.2.11' en waf devolvió >60 eventos recortados pero consistentes (todos bloqueados)."
+    },
+    {
+      "source": "inteligencia (TIP + GeoIP)",
+      "event_id": "consulta 192.0.2.11",
+      "finding": "TIP: null (IOC DESCONOCIDO en el sistema interno). GeoIP: Madrid (ES), AS64620, as_org 'Auditora externa (pentest autorizado, simulado)', hosting=True. El dato de GeoIP por sí solo no legitima la actividad; se confirma por el cambio autorizado."
+    },
+    {
+      "source": "cambios_aprobados",
+      "event_id": "CHG-2026-1042",
+      "finding": "Pentest externo de la tienda online, solicitada por 'Auditora externa', IPs origen 192.0.2.10–12 (incluye 192.0.2.11), alcance www.tarvia.example y api, sin DoS, alcance WEB-ECOM01..04, ventana 2026-10-08 08:00 a 2026-10-10 18:00 (hora local). Confirma origen, destino, horario y cambio autorizado."
+    },
+    {
+      "source": "cmdb_activo",
+      "event_id": "consulta WEB-ECOM01",
+      "finding": "WEB-ECOM01 (10.50.1.11): frontal web, zona DMZ, Ubuntu 22.04/nginx + PHP 8.2, criticidad 'Crítica', servicio 'Tienda online y app (≈38% de la facturación)', sin vulnerabilidades listadas. Los eventos apuntan al host www.tarvia.example, no a la IP de origen del ataque."
+    }
+  ],
+  "enrichment": [
+    {
+      "indicator": "192.0.2.11",
+      "type": "ip",
+      "source": "waf",
+      "result": "TIP: desconocido (null). GeoIP: Madrid, 'Auditora externa (pentest autorizado)', hosting."
+    },
+    {
+      "indicator": "https://www.tarvia.example/api/v1/products?cat=12' OR '1'='1",
+      "type": "url",
+      "source": "waf",
+      "result": "Payload SQLi, bloqueado (403) por regla 942100 en todos los hits."
+    }
+  ],
+  "mitre": [
+    "T1190 (Exploit Public-Facing Application)"
+  ],
+  "recommended_actions": [
+    {
+      "action": "Adjuntar el cambio aprobado CHG-2026-1042 al ticket y cerrar ALR-20261008-011833 como benign_true_positive con severidad low.",
+      "target": "ticketing",
+      "requires_approval": false,
+      "justification": "Actividad de pentest dentro del alcance y ventana autorizados; todos los intentos bloqueados por el WAF; sin evidencia de éxito."
+    },
+    {
+      "action": "Verificar con el equipo de auditoría/pentest que durante la ventana 2026-10-08/10 no hubo actividad fuera del rango 192.0.2.10–12 ni de otros orígenes con el mismo patrón contra los frontales WEB-ECOM01..04 (revisión en lote de WAF por www.tarvia.example en el alcance).",
+      "target": "revisión en lote",
+      "requires_approval": false,
+      "justification": "Confirmar que no existe otra intrusión no autorizada fuera del cambio."
+    },
+    {
+      "action": "No aplicar contención ni bloqueo automático de la IP 192.0.2.11: es un origen legítimo durante el pentest (uso dual autorizado) y bloquearla a nivel global requeriría N2.",
+      "target": "sin_contención_automatica",
+      "requires_approval": false,
+      "justification": "Política apartado 4; la contención es una propuesta, no una ejecución."
+    }
+  ],
+  "escalation": {
+    "escalate": false,
+    "to": "ninguno",
+    "reason": "No se cumplen criterios de escalado obligatorio (apartado 5): es un benign_true_positive, no hay true_positive high/critical, no hay ejecución de código, robo de credenciales, persistencia, salida de datos personales, fraude ni acceso a OT. La actividad está autorizada por cambio aprobado y el WAF bloqueó todos los intentos."
+  },
+  "open_questions": [
+    "Los eventos de WAF por '192.0.2.11' devolvieron >60 resultados recortados; la revisión fue por muestreo consistente (todos 403/blocked), no exhaustiva (límite de búsqueda)."
+  ],
+  "executed_actions": [],
+  "triage_seconds": 65.69
+}

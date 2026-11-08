@@ -1,0 +1,146 @@
+{
+  "ticket_id": "TKT-20261008-ALR-011789",
+  "alert_ids": [
+    "ALR-20261008-011789"
+  ],
+  "title": "UC-EML-004 - Petición fraudulenta de cambio de IBAN de proveedor (BEC / T1657 Financial Theft)",
+  "verdict": "true_positive",
+  "confidence": 0.85,
+  "severity": "medium",
+  "severity_rationale": "Regla medium × criticidad del activo/identidad (baja) = low; +1 por datos de pago implicados (IBAN + 148.320,00 €) = medium. Sin -1 (no hay control que bloquee el pago; el correo se entregó y el pago sigue pendiente).",
+  "affected": {
+    "users": [
+      "laura.ferrer2@tarvia.example (remitente declarado, QA Engineer, no privilegiada)",
+      "jordi.serra2@tarvia.example (destinatario, DPO / responsable de Finanzas cubriendo Teserenía)"
+    ],
+    "hosts": [],
+    "business_services": [
+      "Proceso de pagos / Teserenía (facturación a proveedores)"
+    ],
+    "customers": [
+      "Textiles Montroig (proveedor)"
+    ]
+  },
+  "summary": "Correo interno (EML-0062205) que bajo la identidad de Laura Ferrer solicita a Jordi Serra actualizar el IB del proveedor 'Textiles Montroig' a una cuenta de Lituania (LT12 3250 0000 1234 5678) antes del pago del viernes, por 148.320,00 €. Padrón clásico de Business Email Compromise / fraude de factura: IB de un proveedor español en Lituania, importe alto, urgencia, remitente IP de hosting en Países Bajos y sin cambio aprobado en el sistema. Detectado antes de que se ejecute el pago.",
+  "evidence": [
+    {
+      "source": "email",
+      "event_id": "EML-0062205",
+      "finding": "Envío interno 2026-10-08T08:15:00Z. Remitente laura.ferrer2@tarvia.example → jordi.serra2@tarvia.example. Asunto 'RE: Pagos semana 41 - cambio cuenta Textiles Montroig'. IB nuevo LT12 3250 0000 1234 5678, importe 148.320,00 €, urgencia 'antes del pago del viernes'. Adjunto Certificado_titularidad_Montroig.pdf (sha256 6388853feba384e866cfdc2bf48f9c639544e098701bb0576e44fdc24ced9390, 184.220 B). SPF/DKIM/DMARC pass, verdict 'clean', action 'delivered'. Sender IP 203.0.113.45 (NL/Ámsterdam, hosting, TIP null)."
+    },
+    {
+      "source": "idp_signins",
+      "event_id": "SIGN-0012259..0012262",
+      "finding": "Cuentas de laura.ferrer2 activas y legítimas desde Barcelona (198.18.200.10) 06:46–08:46Z, MFA push aprobada, risk_level 'none', dispositivo conforme. No hay inicio de sesión anómalo; la sesión no coincide con la IP de envío del correo (203.0.113.45), lo que sugere suplantación/uso de otro canal en lugar de compromiso de cuenta."
+    },
+    {
+      "source": "idp_signins",
+      "event_id": "SIGN-0014239..0014242",
+      "finding": "Cuenta de jordi.serra2 activa y legítima desde Barcelona (198.18.200.10) el 2026-10-08, MFA totp aprobada, risk_level 'none', sin actividad post-recepción anormal, credenciales o pagos."
+    },
+    {
+      "source": "email",
+      "event_id": "EML-0010743",
+      "finding": "Canal legítimo del proveedor: facturacion@textiles-montroig.example, IP 198.18.0.45, URLs https://textiles-montroig.example/l/... . El correo fraudulento NO proviene de este canal."
+    },
+    {
+      "source": "proxy",
+      "event_id": "N/A",
+      "finding": "Búsqueda por sha256 del adjunto: 0 descargas registradas (limitación: el proxy web no registra descargas de adjuntos de correo)."
+    },
+    {
+      "source": "edr_events",
+      "event_id": "N/A",
+      "finding": "Búsqueda por sha256 del adjunto: 0 ejecuciones registradas. Sin evidencia de ejecución de código."
+    },
+    {
+      "source": "consultar_cambios",
+      "event_id": "N/A",
+      "finding": "Sin cambios aprobados ni actividades autorizadas para 'Textiles Montroig'. No hay flujo autorizado para el cambio de IB."
+    },
+    {
+      "source": "consultar_inteligencia",
+      "event_id": "N/A",
+      "finding": "IP 203.0.113.45 → TIP null (desconocido), geo NL/Ámsterdam, hosting (AS64601), no Tor/VPN. IBAN LT12 3250 0000 1234 5678 → TIP null (desconocido)."
+    }
+  ],
+  "enrichment": [
+    {
+      "indicator": "203.0.113.45",
+      "type": "ip",
+      "source": "consultar_inteligencia",
+      "result": "TIP null; NL/Ámsterdam; hosting. Sin coincidencia = DESCONOCIO, no limpio."
+    },
+    {
+      "indicator": "LT12 3250 0000 1234 5678",
+      "type": "iban",
+      "source": "consultar_inteligencia",
+      "result": "TIP null; sin reputación conocida."
+    },
+    {
+      "indicator": "6388853feba384e866cfdc2bf48f9c639544e098701bb0576e44fdc24ced9390",
+      "type": "sha256",
+      "source": "email/proxy/edr",
+      "result": "Gateway 'clean'; sin descargas en proxy ni ejecuciones en EDR. Adjunto no analizado en sandbox (no disponible en este triaje)."
+    }
+  ],
+  "mitre": [
+    "T1657 - Financial Theft"
+  ],
+  "recommended_actions": [
+    {
+      "action": "Escalar a N2 de guardia de inmediato",
+      "target": "N2 + Responsable SOC/CISO",
+      "requires_approval": true,
+      "justification": "Fraude económico (IBAN + pago 148.320,00 €) → escalado obligatorio a N2 (política §5)."
+    },
+    {
+      "action": "Retener el pago a Textiles Montroig (148.320,00 €) hasta verificar el IB",
+      "target": "Teserenía/Finanzas",
+      "requires_approval": false,
+      "justification": "Petición de cambio de IBAN no verificada → avisar a Teserenía para retener el pago (runbook RB-01)."
+    },
+    {
+      "action": "Verificar el cambio de IB con Textiles Montroig por canal distinto (teléfono); NO responder al correo",
+      "target": "Teserenía/Compras",
+      "requires_approval": false,
+      "justification": "Runbook RB-01 apartado 5."
+    },
+    {
+      "action": "Proponer bloqueo como IOC del IP de envío 203.0.113.45 y del IB LT12 3250 0000 1234 5678 en correo/proxy",
+      "target": "IOC",
+      "requires_approval": false,
+      "justification": "Contención de bloqueo de IOC (política §4, N1 puede bloquear IOC)."
+    },
+    {
+      "action": "Revisar bandeja de Jordi por si hubo respuesta/envío de credenciales o pago; revisar reglas de buzón",
+      "target": "jordi.serra2",
+      "requires_approval": false,
+      "justification": "Descartar compromiso/post-envío tras la entrega."
+    },
+    {
+      "action": "Investigar si la caja de correo de laura.ferrer2 fue suplantada/usada fuera de su sesión de Barcelona",
+      "target": "laura.ferrer2",
+      "requires_approval": false,
+      "justification": "IP de envío (203.0.113.45) no coincide con su sesión legítima (198.18.200.10). Sin evidencia de compromiso en idp_signins."
+    },
+    {
+      "action": "Detener/purgar EML-0062205 en los buzones alcanzados (solo jordi.serra2)",
+      "target": "message EML-0062205",
+      "requires_approval": false,
+      "justification": "Contención de alcance; alcance acotado a un destinatario."
+    }
+  ],
+  "escalation": {
+    "escalate": true,
+    "to": "N2 de guardia",
+    "reason": "Fraude económico confirmado por patrón: petición de cambio de IB de proveedor a Lituania por 148.320,00 €, sin cambio aprobado (política §5 y §22). Severidad computada = medium; escalado obligatorio a N2 pese a ello por cláusula de fraude económico."
+  },
+  "open_questions": [
+    "Verificación del IB con Textiles Montroig por teléfono (no por correo).",
+    "Confirmar si la caja de laura.ferrer2 fue suplantada o si ella misma fue víctima de ingeniería social (remitente IP vs sesión legítima).",
+    "Estado real del pago a Textiles Montroig en Teserenía."
+  ],
+  "executed_actions": [],
+  "triage_seconds": 141.8
+}

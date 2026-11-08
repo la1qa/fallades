@@ -1,0 +1,170 @@
+{
+  "ticket_id": "TICKET-20261005-000456",
+  "alert_ids": [
+    "ALR-20261005-000456"
+  ],
+  "title": "Triaje UC-NET-006 (túnel DNS) sobre avqs.mcafee.com desde WS-BCN-1223 — benign_true_positive",
+  "verdict": "benign_true_positive",
+  "confidence": 0.92,
+  "severity": "informational",
+  "severity_rationale": "Regla UC-NET-006 con severidad base `medium`. Activo más crítico afectado = WS-BCN-1223 (criticidad `Media`), identidad del propietario gerard.sanchez (no VIP, no privilegiada). Cruce matriz medium × Media daría `medium`; sin embargo, la actividad es un flujo autorizado (agente de seguridad de endpoints) y no hay ejecución de exfiltración real ni salida de datos, por lo que se aplica el ajuste por flujo autorizado: severidad final `informational`. No se requiere escalar a N2: no hay compromiso, robo de credenciales, persistencia, salida de datos personales ni acceso a OT.",
+  "affected": {
+    "users": [
+      "gerard.sanchez@tarvia.example"
+    ],
+    "hosts": [
+      "WS-BCN-1223 (10.10.1.234)",
+      "WS-MAD-1925 (10.11.1.85)"
+    ],
+    "business_services": [
+      "Puesto de trabajo"
+    ],
+    "customers": []
+  },
+  "summary": "La regla UC-NET-006 (posible túnel DNS) disparó por más de 200 consultas en 1 h a subdominios largos (>40 caracteres) de `avqs.mcafee.com`. La investigación confirma que es un flujo legítimo del agente de seguridad de fin de línea (sandbox/verificación de reputación URL de McAfee): todas las respuestas resuelven a `127.0.0.2` (sentinel/local, sin egress real), las subcadenas son hashes hexadecimales de 40 caracteres (búsquedas de reputación, no stream de datos codificados) y el dominio lo consultan múltiples equipos de la flota (132 clientes distintos; confirmados WS-BCN-1223 y WS-MAD-1925). No hay proceso sospechoso detrás ni evidencia de exfiltración; el resto de DNS del equipo es navegación web normal. No es un túnel C2 real.",
+  "evidence": [
+    {
+      "source": "dns",
+      "event_id": "DNS-0008400",
+      "finding": "2026-10-05T07:39:29Z, WS-BCN-1223 (10.10.1.234) — 3aa59e...d4de8.avqs.mcafee.com, qtype A, response 127.0.0.2, NOERROR."
+    },
+    {
+      "source": "dns",
+      "event_id": "DNS-0008401",
+      "finding": "2026-10-05T07:39:36Z — a24f70...c33f6e7.avqs.mcafee.com, response 127.0.0.2, NOERROR (intervalo 7 s)."
+    },
+    {
+      "source": "dns",
+      "event_id": "DNS-0008402",
+      "finding": "2026-10-05T07:39:43Z — e3736e...c6ccdbffb79c9f5.avqs.mcafee.com, response 127.0.0.2."
+    },
+    {
+      "source": "dns",
+      "event_id": "DNS-0008403",
+      "finding": "2026-10-05T07:39:50Z — 3974f4...e7240be308f.avqs.mcafee.com, response 127.0.0.2."
+    },
+    {
+      "source": "dns",
+      "event_id": "DNS-0008404",
+      "finding": "2026-10-05T07:39:57Z — fbd d3167...ec6890df0fc12.avqs.mcafee.com, response 127.0.0.2."
+    },
+    {
+      "source": "dns",
+      "event_id": "DNS-0008405",
+      "finding": "2026-10-05T07:40:04Z — 96cf7a...c8a54.avqs.mcafee.com, response 127.0.0.2. Intervalo regular ~7 s."
+    },
+    {
+      "source": "dns",
+      "event_id": "DNS-0016793",
+      "finding": "2026-10-06T08:02:05Z, WS-MAD-1925 (10.11.1.85) — 143926...e5ede.avqs.mcafee.com, response 127.0.0.2 (mismo patrón en otra oficina)."
+    },
+    {
+      "source": "dns",
+      "event_id": "DNS-0016794",
+      "finding": "2026-10-06T08:02:12Z — 610832...450.avqs.mcafee.com, response 127.0.0.2."
+    },
+    {
+      "source": "dns",
+      "event_id": "DNS-0016795",
+      "finding": "2026-10-06T08:02:19Z — 6ac578...c296.avqs.mcafee.com, response 127.0.0.2."
+    },
+    {
+      "source": "dns",
+      "event_id": "DNS-0016796",
+      "finding": "2026-10-06T08:02:26Z — 796cc0...05c71914f5d.avqs.mcafee.com, response 127.0.0.2."
+    },
+    {
+      "source": "dns",
+      "event_id": "DNS-0016797",
+      "finding": "2026-10-06T08:02:33Z — b98df7...bbda2d.avqs.mcafee.com, response 127.0.0.2."
+    },
+    {
+      "source": "dns",
+      "event_id": "DNS-0016798",
+      "finding": "2026-10-06T08:02:40Z — 592d60...cdac67e.avqs.mcafee.com, response 127.0.0.2."
+    },
+    {
+      "source": "dns",
+      "event_id": "DNS-0001816",
+      "finding": "Navegación normal del mismo equipo: 2026-10-05T08:11:00Z www.google.com → 198.18.0.7."
+    },
+    {
+      "source": "dns",
+      "event_id": "DNS-0001817",
+      "finding": "2026-10-05T08:13:06Z www.caixabank.es → 198.18.0.21 (navegación legítima)."
+    },
+    {
+      "source": "dns",
+      "event_id": "DNS-0001818",
+      "finding": "2026-10-05T09:04:00Z www.wikipedia.org → 198.18.0.31."
+    },
+    {
+      "source": "dns",
+      "event_id": "DNS-0001815",
+      "finding": "2026-10-05T09:18:16Z salesforce.com → 198.18.0.15."
+    },
+    {
+      "source": "dns",
+      "event_id": "DNS-0001821",
+      "finding": "2026-10-05T09:31:09Z chatgpt.com → 198.18.0.39."
+    },
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0005359",
+      "finding": "2026-10-05T07:54:00Z powershell.exe (System), padre CcmExec.exe (Configuration Manager). Command line descodificado = inventario de software Win32_Product → C:\\Windows\\CCM\\Inventory\\sw.json. Actividad SCCM benigna, ajena al túnel DNS."
+    },
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0001090",
+      "finding": "2026-10-05T13:17:41Z MsMpEng.exe (Windows Defender) en ejecución como servicio. Agente de seguridad presente."
+    }
+  ],
+  "enrichment": [
+    {
+      "indicator": "avqs.mcafee.com",
+      "type": "domain",
+      "source": "consultar_inteligencia (TIP interno + GeoIP)",
+      "result": "TIP = null / GeoIP = null. El indicador es DESCONOCIDO en el TIP (no está limpio por defecto). Sin embargo, el dominio padre mcafee.com pertenece a un proveedor de seguridad reconocido y el comportamiento técnico (respuestas a 127.0.0.2, hashes de 40 caracteres, múltiples equipos) es coherente con un servicio de sandbox/verificación de reputación de McAfee."
+    },
+    {
+      "indicator": "10.10.1.234 (WS-BCN-1223)",
+      "type": "ip",
+      "source": "consultar_inteligencia + consultar_activo",
+      "result": "TIP = null. Activo A00223, portátil Windows 11, criticidad Media, zona HQ-USERS, EDR instalado, sin vulnerabilidades. Owner gerard.sanchez (Marketing, no VIP, no privilegiado)."
+    }
+  ],
+  "mitre": [
+    "Tactic: Exfiltration — T1048.003 (Exfiltration Over Unencrypted Non-C2 Protocol, DNS)"
+  ],
+  "recommended_actions": [
+    {
+      "action": "Cerrar el ticket como benign_true_positive con severidad informational.",
+      "target": "ALR-20261005-000456",
+      "requires_approval": false,
+      "justification": "Actividad de agente de seguridad legítimo sin exfiltración real (todo resuelve a 127.0.0.2)."
+    },
+    {
+      "action": "Proponer exclusión/whitelist del patrón de detección para `avqs.mcafee.com` (o la base `.avqs.mcafee.com`) en la regla UC-NET-006 para evitar falsos positivos recurrentes.",
+      "target": "Regla UC-NET-006",
+      "requires_approval": false,
+      "justification": "El runbook RB-09 indica cerrar y proponer exclusión cuando el software es conocido."
+    },
+    {
+      "action": "Verificar que el despliegue/actualización del agente de seguridad de fin de línea esté cubierto por un cambio autorizado (no se encontró cambio aprobado en el registro para `mcafee` o `sandbox`; es una limitación de la investigación).",
+      "target": "Gestión de cambios",
+      "requires_approval": false,
+      "justification": "Confirmar la autorización del flujo de seguridad para consolidar el veredicto."
+    }
+  ],
+  "escalation": {
+    "escalate": false,
+    "to": "ninguno",
+    "reason": "No se cumple ningún criterio de escalado obligatorio a N2: no hay true_positive de severidad high/critical, no hay ejecución de código malicioso, robo de credenciales, persistencia, salida de datos personales ni acceso no autorizado a OT. Es un flujo autorizado de seguridad con severidad informational."
+  },
+  "open_questions": [
+    "No se encontró registro de cambio autorizado para el agente/mcafee en el sistema de cambios (limitación de alcance de la búsqueda). La evidencia técnica es suficientemente fuerte para clasificar como benign, pero conviene confirmar la autorización del despliegue.",
+    "Los logs de DNS devuelven solo una muestra por evento; el contador de la alerta (305 consultas / 132 clientes distintos) es un agregado agregado del motor y no pudo recrearse íntegro desde la búsqueda."
+  ],
+  "executed_actions": [],
+  "triage_seconds": 121.3
+}

@@ -1,0 +1,149 @@
+{
+  "ticket_id": "INC-20261012-011829",
+  "alert_ids": [
+    "ALR-20261012-011829"
+  ],
+  "title": "Ejecución de AnyDesk no autorizado con sesión de control remoto entrante desde Marruecos y recorrido de acción sensible \\FS01\\Tiendas\\Cierres en LT-T07-02",
+  "verdict": "true_positive",
+  "confidence": 0.92,
+  "severity": "high",
+  "severity_rationale": "Regla UC-EDR-005 (Remote Access Software) con severidad base medium × criticidad del activo LT-T07-02 (Media) = cell medium en la matriz. Se aplica el ajuste +1 por 'ejecución o acceso confirmado (no solo intento)': AnyDesk.exe se descargó (PRX-0212611, HTTP 200), se ejecutó (EDR-0123426, detectado, no bloqueado) y un PowerShell hijo de AnyDesk recorrió realmente la acción compartida \\FS01\\Tiendas\\Cierres (EDR-0123428). No aplica -1 (no hubo bloqueo previo y sí hay actividad posterior). Ajuste único: medium + 1 = high. No se aplica ajuste adicional por datos personales/pagos porque no hay evidencia de exfiltración confirmada de clientes; la base de +1 es la ejecución + acceso confirmado.",
+  "affected": {
+    "users": [
+      "andrea.molina2@tarvia.example (Andrea Molina, Dependienta, Tienda 07 Lleida; no privilegiada, no VIP; MFA push)"
+    ],
+    "hosts": [
+      "LT-T07-02 (10.30.7.21; portátil, criticidad Media, zona STORES, no internet-facing)"
+    ],
+    "business_services": [
+      "Operación de tienda"
+    ],
+    "customers": [
+      "no confirmados (no hay exfiltración comprobada)"
+    ]
+  },
+  "summary": "El EDR detectó y ejecutó AnyDesk (RMM no aprobada en Tarvia; solo TeamViewer Corporate está autorizado) en el portátil de una dependienta. El binario fue descargado desde download.anydesk.com y se estableció una sesión de control remoto ENTRANTE desde 198.51.100.210 (Casablanca, Marruecos, proxy residencial / móvil). Tras ello, AnyDesk lanzó un PowerShell que recorrió la acción \\FS01\\Tiendas\\Cierres. No existe cambio aprobado ni ticket IT. El EDR no bloqueó (solo detectó). No se encontró evidencia de robo de credenciales (LSASS) ni persistencia (registry) en los logs disponibles.",
+  "evidence": [
+    {
+      "source": "proxy",
+      "event_id": "PRX-0212611",
+      "finding": "2026-10-12T14:02:00Z. LT-T07-02 / andrea.molina2. GET https://download.anydesk.com/AnyDesk.exe → HTTP 200, ~5 MB descargados (bytes_in 5100000). Acción allowed."
+    },
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0123426",
+      "finding": "2026-10-12T14:05:00Z. process_start AnyDesk.exe desde msedge.exe (pid 7741→10022). sha256 a6a536a710731876ce49160473bc55b5a4143dd66a0695acd3cf9e8c716af333, firmador AnyDesk Software GmbH, integridad Medium. Ejecución confirmada."
+    },
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0123427",
+      "finding": "2026-10-12T14:07:00Z. network_connect AnyDesk.exe → 198.51.100.210:7070, session 'incoming, control remoto', remote AnyDesk ID 1 284 551 903. Sesión entrante desde Marruecos (proxy residencial/móvil)."
+    },
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0123428",
+      "finding": "2026-10-12T14:14:00Z. process_start powershell.exe (hijo de AnyDesk.exe pid 10022→10101). command_line: powershell.exe Get-ChildItem \\\\FS01\\Tiendas\\Cierres -Recurse, firmador Microsoft. Recorrido/lectura de acción sensible."
+    },
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0033503/504/505/506/507 (baseline)",
+      "finding": "Actividad normal previa en LT-T07-02 (OneDrive, Outlook, Edge, Acrobat) en horario de tienda. Sin eventos de LSASS ni acceso a credenciales. Sin bloqueo por el EDR en ningún evento."
+    },
+    {
+      "source": "edr_events",
+      "event_id": "EDR-0123419 (NO relacionado)",
+      "finding": "BACKUP01 / svc_backup: dir \\\\FS01\\Finanzas$ vía RDP desde 10.99.40.17 (01:21). No forma parte de este incidente (otra entidad, otro servicio). Solo citado para descartar."
+    }
+  ],
+  "enrichment": [
+    {
+      "indicator": "a6a536a710731876ce49160473bc55b5a4143dd66a0695acd3cf9e8c716af333 (AnyDesk.exe)",
+      "type": "TIP null (DESCONOCIDO en el TIP). Binario legítimo firmado por AnyDesk Software GmbH. Se juzga por contexto: RMM no autorizada en Tarvia.",
+      "source": "consultar_inteligencia (TIP/Geo)",
+      "result": "TIP/Geo null"
+    },
+    {
+      "indicator": "198.51.100.210",
+      "type": "GeoIP Marruecas (Casablanca), AS64609 proveedor móvil, residential proxy, not Tor/VPN/hosting/hosting.",
+      "source": "consultar_inteligencia (Geo)",
+      "result": "Indicador remoto de control entrante; sospechoso por geolocalización y tipo de proxy"
+    },
+    {
+      "indicator": "download.anydesk.com",
+      "type": "TIP benign (reputación 90), legit-service, dual-use.",
+      "source": "consultar_inteligencia (TIP)",
+      "result": "Sitio oficial; legítimo pero de uso dual (bajo política, la descarga de la RMM no autorizada sigue siendo la infracción"
+    },
+    {
+      "indicator": "user: andrea.molina2",
+      "type": "Rol Dependienta, no privilegiada, no VIP, MFA push.",
+      "source": "consultar_usuario",
+      "result": "Sin contexto de HR. No explica legitimidad de la sesión"
+    },
+    {
+      "indicator": "host: LT-T07-02",
+      "type": "PortátilStores, criticidad Media, no internet-facing.",
+      "source": "consultar_activo",
+      "result": "Activo de tienda; exposición bajo control remoto externo es significativa"
+    },
+    {
+      "indicator": "cambios",
+      "type": "consultar_cambios('Andrea Molina AnyDesk LT-T07-02') → [] . Sin cambio aprobado ni flujo autorizado ni ticket IT (la propia alerta indica it_ticket: ninguno).",
+      "source": "consultar_cambios",
+      "result": "Actividad NO autorizada"
+    }
+  ],
+  "mitre": [
+    "T1219 Remote Access Software (Command and Control)",
+    "T1083 File and Directory Discovery (recorrido de \\\\FS01\\Tiendas\\Cierres)"
+  ],
+  "recommended_actions": [
+    {
+      "action": "ESCALAR a N2 en la misma jornada (obligatorio por true_positive high + cadena de ataque: descarga→ejecución RMM→control remoto entrante desde extranjero→recorrido de acción sensible)",
+      "target": "N2 / responsable SOC",
+      "requires_approval": false,
+      "justification": "Sección 5 del SOC: true_positive high y cadena de ataque."
+    },
+    {
+      "action": "Aislar el equipo LT-T07-02 (no reiniciarlo si se quiere conservar memoria forense) — PROPUESTA requiere aprobación N2",
+      "target": "host LT-T07-02",
+      "requires_approval": true,
+      "justification": "Política sec.4: aislar un TP requiere N2. Control remoto externo activo."
+    },
+    {
+      "action": "Bloquear en proxy y EDR los IOC: IP 198.51.100.210, dominio download.anydesk.com, sha256 a6a536a710731876ce49160473bc55b5a4143dd66a0695acd3cf9e8c716af333. El N1 puede bloquear IOCs (sec.4). No ejecutar sin cerrar el ticket: es recomendación",
+      "target": "proxy/EDR",
+      "requires_approval": false,
+      "justification": "Contención de IOC de uso dual: aplicar a nivel de IOEs concretos, no bloquear globalmente sin N2"
+    },
+    {
+      "action": "Revocar sesiones activas de andrea.molina2 y proponer reset de contraseña — PROPUESTA requiere aprobación N2 (la cuenta no es de servicio, pero puede haber sessiones activas del RMM/tienda)",
+      "target": "cuenta andrea.molina2",
+      "requires_approval": true,
+      "justification": "Acceso remoto externo a cuenta de usuario; contención defensiva"
+    },
+    {
+      "action": "Revisar en FS01 los logs de acceso a \\\\FS01\\Tiendas\\Cierres (quién lee/copia y hacia dónde) para determinar si hay exfiltración real de datos de cierre de tienda. Los logs proxy/firewall de LT-T07-02 no mostraron salida; límite de búsqueda",
+      "target": "FS01 / Siem",
+      "requires_approval": false,
+      "justification": "Confirmar o descartar salida de datos sensibles"
+    },
+    {
+      "action": "Verificar si el resto de la cadena de ataque (p. ej. otros equipos en \\\\FS01) muestra patrones similares; revisar alertas asociadas para agrupar en este mismo incidente",
+      "target": "Siem",
+      "requires_approval": false,
+      "justification": "Agrupación correcta del incidente"
+    }
+  ],
+  "escalation": {
+    "escalate": true,
+    "to": "N2",
+    "reason": "true_positive de severidad high; ejecución confirmada de RMM no autorizada con control remoto entrante desde jurisdicción extra UE (Marruecos) y acceso a acción compartida de cierre de tienda; posible compromiso de datos sensibles. Notificar al responsable SOC."
+  },
+  "open_questions": [
+    "Existe exfiltración real de datos de cierre de tienda desde \\\\FS01\\Tiendas\\Cierres? (no observable en los logs proxy/firewall disponibles)",
+    "Andrea Molina es víctima de ingeniería social o agente interno? (no afecta veredicto; sí al plan de contención de credenciales)"
+  ],
+  "executed_actions": [],
+  "triage_seconds": 105.21
+}
